@@ -73,4 +73,23 @@ export default function WrongPage() {
         </label>
       </div>
 
-      <div style={{ display: "flex", gap:
+      {/* 끊겼던 부분을 아래와 같이 수정했습니다 */}
+      <div style={{ display: "flex", gap: "10px" }}>
+        <button 
+          onClick={prev} 
+          disabled={index === 0}
+          style={{ padding: "10px 20px", fontSize: 16 }}
+        >
+          이전 문제
+        </button>
+        <button 
+          onClick={next} 
+          disabled={index === wrongIndexes.length - 1}
+          style={{ padding: "10px 20px", fontSize: 16 }}
+        >
+          다음 문제
+        </button>
+      </div>
+    </div>
+  );
+}
