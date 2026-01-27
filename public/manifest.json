@@ -1,0 +1,8 @@
+{
+  "name": "나의 CBT 학습 도구",
+  "short_name": "CBT",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007AFF"
+}
