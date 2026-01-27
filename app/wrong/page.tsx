@@ -53,7 +53,7 @@ export default function WrongPage() {
 
       <div style={{ marginBottom: 20 }}>
         <img
-          src={q.image}
+          src={q.image!}
           alt={`question-${q.id}`}
           style={{ width: "100%", border: "1px solid #ccc" }}
         />
