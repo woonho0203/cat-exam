@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
+/* 1. 시스템 설정과 상관없이 다크모드 색상으로 고정합니다 */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #121212;
+  --foreground: #ffffff;
 }
 
 @theme inline {
@@ -12,15 +13,18 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* 2. 라이트모드 미디어 쿼리를 삭제하여 반전을 방지합니다 */
 
 body {
-  background: var(--background);
+  /* 배경색을 강제로 고정하고 텍스트를 흰색으로 설정합니다 */
+  background: var(--background) !important;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  -webkit-tap-highlight-color: transparent; /* 아이패드 터치 시 파란 박스 제거 */
+}
+
+/* 3. 아이패드에서 스크롤 바운스 시 흰 배경이 보이는 것을 방지합니다 */
+html {
+  background-color: #121212;
 }

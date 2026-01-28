@@ -12,16 +12,17 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// 🔴 1. 메타데이터 부분을 PWA 설정에 맞게 수정했습니다.
+// 1. 메타데이터 (PWA 및 앱 정보 설정)
 export const metadata: Metadata = {
-  title: "나의 CBT 학습 도구",
-  description: "아이패드에서 공부하기 위한 나만의 앱",
-  manifest: "/manifest.json", // public 폴더의 manifest.json 연결
+  title: "산업안전기사 CBT", // 제목 수정
+  description: "아이패드에서 공부하기 위한 나만의 학습 도구",
+  manifest: "/manifest.json",
   appleWebApp: {
-    capable: true, // 아이패드에서 주소창 없이 실행되게 함
-    statusBarStyle: "default",
-    title: "나의 CBT",
+    capable: true, // 주소창 없이 실행 (전체 화면 모드)
+    statusBarStyle: "black-translucent", // 상단 바 색상 다크모드 대응
+    title: "산업안전CBT",
   },
+  themeColor: "#121212", // PWA 테마 색상 고정
 };
 
 export default function RootLayout({
@@ -30,13 +31,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    // html 태그에도 배경색을 주어 로딩 시 깜빡임을 방지합니다.
+    <html lang="ko" style={{ backgroundColor: "#121212" }}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{ 
+          backgroundColor: "#121212", // 배경색 강제 고정
+          color: "#ffffff", 
+          margin: 0, 
+          minHeight: "100vh" 
+        }}
       >
         {children}
         
-        {/* 🔴 2. 서비스 워커(sw.js)를 등록하는 스크립트를 추가했습니다. */}
+        {/* 2. 서비스 워커 등록 스크립트 */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
