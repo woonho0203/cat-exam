@@ -154,7 +154,7 @@ const questions = [
   {
     id: 20,
     question: "레윈(Lewin.K)에 의하여 제시된 인간의 행동에 관한 식을 올바르게 표현한 것은? (단, B는 인간의 행동, P는 개체, E는 환경, f는 함수관계를 의미한다.)",
-    options: ["B=f(P, E)", "B=f(P+E)", "P=f(B, E)", "E=f(P, B)"],
+    options: ["B=f(P x E)", "B=f(P+1)", "P=E x f(B)", "E=f(P x B)"],
     answer: 1,
     explanation: "Lewin의 법칙: B = f(P, E). 행동(Behavior)은 개체(Person)와 환경(Environment)의 상호작용(Function)이다.",
     image: null,

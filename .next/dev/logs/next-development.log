@@ -1,0 +1,16 @@
+[00:00:39.499] Server  LOG     ✓ Ready in 26.6s
+[00:00:56.740] Server  LOG     ○ Compiling / ...
+[00:02:45.283] Server  LOG     ✓ Finished writing to filesystem cache in 25.4s
+[00:03:24.905] Server  LOG     ○ Compiling /exam/[id] ...
+[00:04:00.288] Server  LOG     ✓ Finished filesystem cache database compaction in 10.1s
+[00:05:04.899] Server  LOG     ✓ Compiled in 502ms
+[00:06:00.728] Server  LOG     ○ Compiling /result ...
+[00:06:23.846] Server  LOG     ✓ Finished writing to filesystem cache in 14.0s
+[00:09:50.108] Server  LOG     ✓ Compiled in 7.8s
+[00:09:57.076] Server  LOG     ○ Compiling /wrong-notes ...
+[00:10:28.204] Server  LOG     ✓ Finished writing to filesystem cache in 20.5s
+[00:10:44.793] Server  LOG     ✓ Finished filesystem cache database compaction in 16.6s
+[00:16:34.738] Server  LOG     ✓ Compiled in 2.3s
+[00:20:34.487] Server  LOG     ✓ Compiled in 4.5s
+[00:20:34.914] Server  LOG     ✓ Compiled in 0ms
+[00:22:46.326] Server  LOG     ✓ Compiled in 4.9s
