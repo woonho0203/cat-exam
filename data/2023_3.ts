@@ -226,7 +226,7 @@ const questions = [
   {
     id: 29,
     question: "다음 A ~ D를 실내 면에서 빛의 반사율이 낮은 곳부터 순서대로 나열한 것은? (A: 바닥, B: 천장, C: 가구, D: 벽)",
-    options: ["A < C < D < B", "A < C < B < D", "A < C < D < B", "A < D < C < B"],
+    options: ["A < B < C < D", "A < C < B < D", "A < C < D < B", "A < D < C < B"],
     answer: 3,
     explanation: "일반적인 실내 반사율 권장치: 바닥(20~40%) < 가구(25~45%) < 벽(40~60%) < 천장(80~90%). 순서는 A < C < D < B 입니다.",
     image: null,

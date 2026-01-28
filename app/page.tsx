@@ -3,7 +3,8 @@
 import Link from "next/link";
 
 export default function Home() {
-  const years = [2021, 2022, 2023, 2024, 2025];
+  // ▼▼▼ 여기 순서를 최신순(내림차순)으로 바꿨습니다 ▼▼▼
+  const years = [2025, 2024, 2023, 2022, 2021];
   const sessions = [1, 2, 3];
 
   return (
