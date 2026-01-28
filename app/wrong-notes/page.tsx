@@ -41,6 +41,21 @@ export default function WrongNotesPage() {
 
   const currentQ = solvingQuestions[currentIndex];
 
+  // 🔥 [핵심 추가] 다시 풀기 모드에서 현재 화면 기준 정답 번호 계산
+  const currentCorrectNum = useMemo(() => {
+    if (!currentQ) return 0;
+    // 오답노트 데이터 구조에 따라 originalOptions 또는 options를 확인해야 함
+    // 만약 ExamPage에서 셔플된 상태로 저장했다면 shuffledOptions를, 아니면 원본 options를 기준으로 계산
+    const targetOptions = currentQ.shuffledOptions || currentQ.options;
+    
+    // 만약 shuffledOptions가 있다면 그 안에서 originalNum을 찾고, 
+    // 그냥 options라면 index + 1이 답임 (데이터 구조에 맞게 유연하게 대응)
+    if (currentQ.shuffledOptions) {
+      return currentQ.shuffledOptions.findIndex((opt: any) => opt.originalNum === currentQ.answer) + 1;
+    }
+    return currentQ.answer;
+  }, [currentQ]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isSolving || !currentQ) return;
@@ -60,20 +75,17 @@ export default function WrongNotesPage() {
     setSelectedAnswer(num);
     setShowExplanation(true);
 
-    // 🚀 [자동 삭제] 맞혔을 경우 로컬 스토리지에서 즉시 삭제
-    if (num === currentQ.answer) {
+    if (num === currentCorrectNum) { // 화면 번호 기준으로 정답 체크
       const updated = wrongList.filter(item => !(item.id === currentQ.id && item.examId === currentQ.examId));
       localStorage.setItem("cbt-wrong-list", JSON.stringify(updated));
     }
   };
 
   const nextWrong = () => {
-    // 맞혔던 문제라면 리스트 상태를 갱신 (인덱스는 그대로 두면 다음 문제가 밀려옴)
-    if (selectedAnswer === currentQ.answer) {
+    if (selectedAnswer === currentCorrectNum) {
       const updated = wrongList.filter(item => !(item.id === currentQ.id && item.examId === currentQ.examId));
       setWrongList(updated);
       
-      // 만약 해당 섹션의 마지막 문제였다면 종료
       const remainingInSession = updated.filter(item => 
         new Date(item.addedAt).toLocaleDateString() === selectedDate && item.examId === selectedSession
       );
@@ -83,7 +95,6 @@ export default function WrongNotesPage() {
         setIsSolving(false);
       }
     } else {
-      // 틀렸다면 다음 문제로 인덱스 이동
       if (currentIndex < solvingQuestions.length - 1) {
         setCurrentIndex(currentIndex + 1);
       } else {
@@ -101,6 +112,8 @@ export default function WrongNotesPage() {
   };
 
   if (isSolving && currentQ) {
+    const displayOptions = currentQ.shuffledOptions || currentQ.options;
+
     return (
       <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "40px 20px" }}>
         <div style={{ maxWidth: 800, margin: "0 auto" }}>
@@ -110,25 +123,28 @@ export default function WrongNotesPage() {
           </div>
           <h2 style={{ backgroundColor: "#1E1E1E", padding: "20px", borderRadius: "12px", border: "1px solid #333", marginBottom: 20 }}>{currentQ.question}</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {currentQ.options.map((opt: string, i: number) => {
+            {displayOptions.map((opt: any, i: number) => {
               const num = i + 1;
+              const optText = typeof opt === 'string' ? opt : opt.text;
               let bgColor = "#2C2C2C";
               if (showExplanation) {
-                if (num === currentQ.answer) bgColor = "#1B5E20";
+                if (num === currentCorrectNum) bgColor = "#1B5E20";
                 else if (selectedAnswer === num) bgColor = "#3E2723";
               }
               return (
                 <div key={i} onClick={() => (showExplanation ? nextWrong() : handleSelect(num))} style={{ padding: "15px", borderRadius: "10px", cursor: "pointer", backgroundColor: bgColor, border: "2px solid #333" }}>
-                  {num}. {opt}
+                  {num}. {optText}
                 </div>
               );
             })}
           </div>
           {showExplanation && (
             <div style={{ marginTop: 25, padding: 25, backgroundColor: "#1E1E1E", borderRadius: 15, border: "1px solid #4FC3F7" }}>
+              <h3 style={{ margin: "0 0 10px 0", color: selectedAnswer === currentCorrectNum ? "#81C784" : "#FF5252" }}>
+                {selectedAnswer === currentCorrectNum ? "✅ 정답입니다!" : `❌ 오답입니다. (정답: ${currentCorrectNum}번)`}
+              </h3>
               <p style={{ color: "#4FC3F7", fontWeight: "bold", marginBottom: 5 }}>💡 해설</p>
               <p>{currentQ.explanation}</p>
-              <p style={{ color: "#666", fontSize: "0.8rem", marginTop: 15 }}>맞히면 오답노트에서 자동으로 삭제됩니다.</p>
             </div>
           )}
         </div>

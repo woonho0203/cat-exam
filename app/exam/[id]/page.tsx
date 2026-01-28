@@ -37,6 +37,12 @@ export default function ExamPage() {
 
   const q = questions[index];
 
+  // 🔥 [핵심 추가] 현재 섞인 보기들 중에서 정답이 몇 번째 인덱스에 있는지 계산
+  const currentCorrectNum = useMemo(() => {
+    if (!q) return 0;
+    return q.shuffledOptions.findIndex((opt: any) => opt.originalNum === q.answer) + 1;
+  }, [q]);
+
   useEffect(() => {
     if (questions.length > 0) setAnswers(Array(questions.length).fill(0));
   }, [questions]);
@@ -46,7 +52,6 @@ export default function ExamPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // ⌨️ 키보드 제어 (연타 기능 포함)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!q) return;
@@ -65,16 +70,9 @@ export default function ExamPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [index, isExamMode, result, q]);
 
-  // 📊 실시간 통계 계산
   const attemptedCount = answers.filter((a) => a !== 0).length;
   const correctCount = answers.filter((ans, idx) => questions[idx] && ans === questions[idx].answer).length;
   const accuracy = attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : 0;
-
-  const formatTime = (secs: number) => {
-    const m = Math.floor(secs / 60).toString().padStart(2, "0");
-    const s = (secs % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  };
 
   const handleSelectAnswer = (originalNum: number) => {
     if (!isExamMode && result) { next(); return; }
@@ -108,7 +106,7 @@ export default function ExamPage() {
 
     localStorage.setItem("cbt-wrong-list", JSON.stringify(uniqueWrongs));
     localStorage.setItem("cbt-answers", JSON.stringify(answers));
-    localStorage.setItem("cbt-time", formatTime(seconds));
+    localStorage.setItem("cbt-time", Math.floor(seconds / 60) + ":" + (seconds % 60).toString().padStart(2, '0'));
     localStorage.setItem("cbt-id", params.id as string);
     router.push("/result");
   };
@@ -119,11 +117,11 @@ export default function ExamPage() {
     <div style={{ minHeight: "100vh", backgroundColor: "#121212", display: "flex", flexDirection: "column" }}>
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "20px", width: "100%", color: "#ffffff" }}>
         
-        {/* 1. 상단 정보 바 */}
+        {/* 상단 헤더 및 현황판 */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
           <div style={{ fontSize: "1.2rem", fontWeight: "bold", color: "#ddd" }}>{params.id}회차</div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ fontSize: "1.2rem", fontWeight: "bold", color: "#FFD54F", border: "1px solid #FFD54F", padding: "5px 12px", borderRadius: "20px" }}>⏳ {formatTime(seconds)}</div>
+            <div style={{ fontSize: "1.2rem", fontWeight: "bold", color: "#FFD54F", border: "1px solid #FFD54F", padding: "5px 12px", borderRadius: "20px" }}>⏳ {Math.floor(seconds / 60)}:{(seconds % 60).toString().padStart(2, '0')}</div>
             <label style={{ fontSize: 14, display: "flex", alignItems: "center", cursor: "pointer", backgroundColor: isExamMode ? "#444" : "#eee", color: isExamMode ? "white" : "black", padding: "8px 16px", borderRadius: 20 }}>
               <input type="checkbox" checked={isExamMode} onChange={(e) => { setIsExamMode(e.target.checked); setResult(null); }} style={{ marginRight: 8 }} />
               {isExamMode ? "📝 실전" : "📖 학습"}
@@ -131,38 +129,28 @@ export default function ExamPage() {
           </div>
         </div>
 
-        {/* 2. 🔥 [부활] 실시간 현황판 */}
-        <div style={{ 
-          backgroundColor: "#1E1E1E", padding: "15px", borderRadius: "12px", marginBottom: "25px",
-          display: "flex", justifyContent: "space-around", alignItems: "center", border: "1px solid #333",
-          boxShadow: "0 4px 6px rgba(0,0,0,0.3)"
-        }}>
+        <div style={{ backgroundColor: "#1E1E1E", padding: "15px", borderRadius: "12px", marginBottom: "25px", display: "flex", justifyContent: "space-around", alignItems: "center", border: "1px solid #333" }}>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "0.85rem", color: "#aaa", marginBottom: "5px" }}>푼 문제</div>
-            <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
-              <span style={{ color: "white" }}>{attemptedCount}</span>
-              <span style={{ color: "#555", fontSize: "0.9rem" }}> / {questions.length}</span>
-            </div>
+            <div style={{ fontSize: "0.85rem", color: "#aaa" }}>푼 문제</div>
+            <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>{attemptedCount} / {questions.length}</div>
           </div>
-          <div style={{ width: "1px", height: "30px", backgroundColor: "#333" }}></div>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "0.85rem", color: "#aaa", marginBottom: "5px" }}>맞은 개수</div>
+            <div style={{ fontSize: "0.85rem", color: "#aaa" }}>맞은 개수</div>
             <div style={{ fontSize: "1.2rem", fontWeight: "bold", color: "#4CAF50" }}>{correctCount}개</div>
           </div>
-          <div style={{ width: "1px", height: "30px", backgroundColor: "#333" }}></div>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "0.85rem", color: "#aaa", marginBottom: "5px" }}>정답률</div>
+            <div style={{ fontSize: "0.85rem", color: "#aaa" }}>정답률</div>
             <div style={{ fontSize: "1.2rem", fontWeight: "bold", color: "#2196F3" }}>{accuracy}%</div>
           </div>
         </div>
 
-        {/* 3. 문제 영역 */}
+        {/* 문제 영역 */}
         <div style={{ color: "#4FC3F7", marginBottom: 10, fontWeight: "bold" }}>Q{index + 1}.</div>
         <h2 style={{ fontSize: "1.4rem", lineHeight: "1.6", marginBottom: 20, color: "#ffffff", backgroundColor: "#1E1E1E", padding: "20px", borderRadius: "12px", border: "1px solid #333" }}>
           {q.question}
         </h2>
 
-        {/* 4. 보기 버튼 영역 */}
+        {/* 보기 버튼 영역 */}
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "30px" }}>
           {q.shuffledOptions?.map((opt: any, idx: number) => {
             const isSelected = answers[index] === opt.originalNum;
@@ -176,7 +164,7 @@ export default function ExamPage() {
             }
             return (
               <div key={idx} onClick={() => handleSelectAnswer(opt.originalNum)}
-                style={{ padding: "15px 20px", border: `2px solid ${borderColor}`, borderRadius: "10px", cursor: "pointer", backgroundColor: bgColor, color: "white", fontSize: "1.1rem", display: "flex", alignItems: "center", transition: "0.2s" }}
+                style={{ padding: "15px 20px", border: `2px solid ${borderColor}`, borderRadius: "10px", cursor: "pointer", backgroundColor: bgColor, color: "white", fontSize: "1.1rem", display: "flex", alignItems: "center", transition: "all 0.2s" }}
               >
                 <span style={{ marginRight: "15px", width: "24px", height: "24px", borderRadius: "50%", border: "1px solid #555", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "0.8rem" }}>{idx + 1}</span>
                 {opt.text}
@@ -185,10 +173,12 @@ export default function ExamPage() {
           })}
         </div>
 
-        {/* 5. 해설 및 하단 버튼 */}
+        {/* 🔥 [수정된 해설 영역] q.answer 대신 currentCorrectNum을 사용합니다 */}
         {!isExamMode && result && (
           <div style={{ backgroundColor: result === "correct" ? "#1B5E20" : "#3E2723", color: "white", padding: 20, borderRadius: 10, marginBottom: 20, border: result === "correct" ? "1px solid #4CAF50" : "1px solid #FF5252" }}>
-            <h3 style={{ margin: "0 0 10px 0", color: result === "correct" ? "#81C784" : "#FF5252" }}>{result === "correct" ? "✅ 정답입니다!" : `❌ 오답입니다. (정답: ${q.answer}번)`}</h3>
+            <h3 style={{ margin: "0 0 10px 0", color: result === "correct" ? "#81C784" : "#FF5252" }}>
+              {result === "correct" ? "✅ 정답입니다!" : `❌ 오답입니다. (정답: ${currentCorrectNum}번)`}
+            </h3>
             <div style={{ fontSize: 16, lineHeight: "1.6" }}><strong>[해설]</strong> {q.explanation}</div>
           </div>
         )}
