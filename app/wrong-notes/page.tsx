@@ -41,21 +41,16 @@ export default function WrongNotesPage() {
 
   const currentQ = solvingQuestions[currentIndex];
 
-  // 🔥 [핵심 추가] 다시 풀기 모드에서 현재 화면 기준 정답 번호 계산
   const currentCorrectNum = useMemo(() => {
     if (!currentQ) return 0;
-    // 오답노트 데이터 구조에 따라 originalOptions 또는 options를 확인해야 함
-    // 만약 ExamPage에서 셔플된 상태로 저장했다면 shuffledOptions를, 아니면 원본 options를 기준으로 계산
     const targetOptions = currentQ.shuffledOptions || currentQ.options;
-    
-    // 만약 shuffledOptions가 있다면 그 안에서 originalNum을 찾고, 
-    // 그냥 options라면 index + 1이 답임 (데이터 구조에 맞게 유연하게 대응)
     if (currentQ.shuffledOptions) {
       return currentQ.shuffledOptions.findIndex((opt: any) => opt.originalNum === currentQ.answer) + 1;
     }
     return currentQ.answer;
   }, [currentQ]);
 
+  // 키보드 이벤트 로직 유지
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isSolving || !currentQ) return;
@@ -74,8 +69,7 @@ export default function WrongNotesPage() {
     if (showExplanation) return;
     setSelectedAnswer(num);
     setShowExplanation(true);
-
-    if (num === currentCorrectNum) { // 화면 번호 기준으로 정답 체크
+    if (num === currentCorrectNum) {
       const updated = wrongList.filter(item => !(item.id === currentQ.id && item.examId === currentQ.examId));
       localStorage.setItem("cbt-wrong-list", JSON.stringify(updated));
     }
@@ -85,11 +79,9 @@ export default function WrongNotesPage() {
     if (selectedAnswer === currentCorrectNum) {
       const updated = wrongList.filter(item => !(item.id === currentQ.id && item.examId === currentQ.examId));
       setWrongList(updated);
-      
       const remainingInSession = updated.filter(item => 
         new Date(item.addedAt).toLocaleDateString() === selectedDate && item.examId === selectedSession
       );
-      
       if (currentIndex >= remainingInSession.length) {
         alert("해당 폴더의 오답을 모두 정복했습니다! 🎉");
         setIsSolving(false);
@@ -105,23 +97,23 @@ export default function WrongNotesPage() {
     setShowExplanation(false);
   };
 
-  const removeItem = (id: number, examId: string) => {
-    const updated = wrongList.filter(item => !(item.id === id && item.examId === examId));
-    localStorage.setItem("cbt-wrong-list", JSON.stringify(updated));
-    setWrongList(updated);
-  };
-
+  // 문제 풀기 모드 (다시 풀기 화면)
   if (isSolving && currentQ) {
     const displayOptions = currentQ.shuffledOptions || currentQ.options;
 
     return (
-      <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "40px 20px" }}>
+      <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "clamp(15px, 5vw, 40px) 15px" }}>
         <div style={{ maxWidth: 800, margin: "0 auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20, color: "#aaa" }}>
-            <span>📂 {selectedDate} ＞ {selectedSession}</span>
-            <span>{currentIndex + 1} / {solvingQuestions.length}</span>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 15, color: "#aaa", fontSize: "0.85rem" }}>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "70%" }}>📂 {selectedSession}</span>
+            <span>{currentIndex + 1}/{solvingQuestions.length}</span>
           </div>
-          <h2 style={{ backgroundColor: "#1E1E1E", padding: "20px", borderRadius: "12px", border: "1px solid #333", marginBottom: 20 }}>{currentQ.question}</h2>
+          <h2 style={{ 
+            backgroundColor: "#1E1E1E", padding: "clamp(15px, 4vw, 25px)", borderRadius: "12px", border: "1px solid #333", 
+            marginBottom: 20, fontSize: "clamp(1rem, 4.5vw, 1.2rem)", lineHeight: "1.5", wordBreak: "keep-all" 
+          }}>
+            {currentQ.question}
+          </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {displayOptions.map((opt: any, i: number) => {
               const num = i + 1;
@@ -132,19 +124,23 @@ export default function WrongNotesPage() {
                 else if (selectedAnswer === num) bgColor = "#3E2723";
               }
               return (
-                <div key={i} onClick={() => (showExplanation ? nextWrong() : handleSelect(num))} style={{ padding: "15px", borderRadius: "10px", cursor: "pointer", backgroundColor: bgColor, border: "2px solid #333" }}>
+                <div key={i} onClick={() => (showExplanation ? nextWrong() : handleSelect(num))} style={{ 
+                  padding: "clamp(12px, 4vw, 18px) 15px", borderRadius: "10px", cursor: "pointer", 
+                  backgroundColor: bgColor, border: "2px solid #333", fontSize: "clamp(0.9rem, 4vw, 1.05rem)", lineHeight: "1.4"
+                }}>
                   {num}. {optText}
                 </div>
               );
             })}
           </div>
           {showExplanation && (
-            <div style={{ marginTop: 25, padding: 25, backgroundColor: "#1E1E1E", borderRadius: 15, border: "1px solid #4FC3F7" }}>
-              <h3 style={{ margin: "0 0 10px 0", color: selectedAnswer === currentCorrectNum ? "#81C784" : "#FF5252" }}>
-                {selectedAnswer === currentCorrectNum ? "✅ 정답입니다!" : `❌ 오답입니다. (정답: ${currentCorrectNum}번)`}
+            <div style={{ marginTop: 20, padding: "clamp(15px, 5vw, 25px)", backgroundColor: "#1E1E1E", borderRadius: 15, border: "1px solid #4FC3F7" }}>
+              <h3 style={{ margin: "0 0 10px 0", color: selectedAnswer === currentCorrectNum ? "#81C784" : "#FF5252", fontSize: "clamp(1rem, 4vw, 1.2rem)" }}>
+                {selectedAnswer === currentCorrectNum ? "✅ 정답입니다!" : `❌ 정답: ${currentCorrectNum}번`}
               </h3>
-              <p style={{ color: "#4FC3F7", fontWeight: "bold", marginBottom: 5 }}>💡 해설</p>
-              <p>{currentQ.explanation}</p>
+              <p style={{ color: "#4FC3F7", fontWeight: "bold", marginBottom: 5, fontSize: "0.9rem" }}>💡 해설</p>
+              <p style={{ fontSize: "clamp(0.85rem, 3.8vw, 1rem)", lineHeight: "1.6", color: "#ddd" }}>{currentQ.explanation}</p>
+              <button onClick={nextWrong} style={{ width: "100%", marginTop: 15, padding: "12px", backgroundColor: "#333", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold" }}>다음으로</button>
             </div>
           )}
         </div>
@@ -152,31 +148,50 @@ export default function WrongNotesPage() {
     );
   }
 
+  // 기본 목록 화면
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "40px 20px" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "clamp(15px, 5vw, 40px) 15px" }}>
       <div style={{ maxWidth: 800, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 30 }}>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: "bold" }}>{selectedDate ? `📂 ${selectedDate}` : "📅 오답 기록"}</h1>
-          <Link href="/"><button style={{ padding: "8px 16px", backgroundColor: "#333", color: "white", border: "none", borderRadius: 8 }}>홈으로</button></Link>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 25 }}>
+          <h1 style={{ fontSize: "clamp(1.3rem, 6vw, 1.8rem)", fontWeight: "bold" }}>
+            {selectedDate ? `📂 ${selectedDate}` : "📅 오답 기록"}
+          </h1>
+          <Link href="/">
+            <button style={{ padding: "8px 16px", backgroundColor: "#333", color: "white", border: "none", borderRadius: 8, fontSize: "0.85rem" }}>홈으로</button>
+          </Link>
         </div>
+
         {!selectedDate && (
-          <div style={{ display: "grid", gap: 15 }}>
-            {Object.keys(groupedData).length === 0 ? <p style={{ textAlign: "center", marginTop: 50, color: "#666" }}>오답 노트가 비어있습니다. 아주 훌륭합니다! 👏</p> : 
+          <div style={{ display: "grid", gap: 12 }}>
+            {Object.keys(groupedData).length === 0 ? (
+              <p style={{ textAlign: "center", marginTop: 50, color: "#666", fontSize: "0.9rem" }}>오답 노트가 비어있습니다. 아주 훌륭합니다! 👏</p>
+            ) : (
               Object.keys(groupedData).reverse().map(date => (
-                <div key={date} onClick={() => setSelectedDate(date)} style={{ padding: "20px", backgroundColor: "#1E1E1E", borderRadius: 12, cursor: "pointer", border: "1px solid #333" }}>
-                  📁 <span style={{ fontWeight: "bold", marginLeft: 10 }}>{date}</span>
-                  <div style={{ fontSize: "0.8rem", color: "#666", marginLeft: 35 }}>{Object.keys(groupedData[date]).length}개 회차 기록됨</div>
+                <div key={date} onClick={() => setSelectedDate(date)} style={{ 
+                  padding: "clamp(15px, 4vw, 20px)", backgroundColor: "#1E1E1E", borderRadius: 12, 
+                  cursor: "pointer", border: "1px solid #333", display: "flex", flexDirection: "column", gap: 5 
+                }}>
+                  <div style={{ fontSize: "1.05rem", fontWeight: "bold" }}>📁 {date}</div>
+                  <div style={{ fontSize: "0.8rem", color: "#666" }}>{Object.keys(groupedData[date]).length}개 회차 기록됨</div>
                 </div>
-            ))}
+              ))
+            )}
           </div>
         )}
+
         {selectedDate && !isSolving && (
-          <div style={{ display: "grid", gap: 15 }}>
-            <button onClick={() => setSelectedDate(null)} style={{ color: "#4FC3F7", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>⬅️ 뒤로가기</button>
+          <div style={{ display: "grid", gap: 12 }}>
+            <button onClick={() => setSelectedDate(null)} style={{ color: "#4FC3F7", background: "none", border: "none", cursor: "pointer", textAlign: "left", marginBottom: 10, fontSize: "0.9rem" }}>⬅️ 날짜 선택으로 돌아가기</button>
             {Object.keys(groupedData[selectedDate]).map(examId => (
-              <div key={examId} style={{ padding: "20px", backgroundColor: "#1E1E1E", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid #333" }}>
-                <div>📄 {examId}회차 ({groupedData[selectedDate][examId].length}문제)</div>
-                <button onClick={() => { setSelectedSession(examId); setIsSolving(true); setCurrentIndex(0); setShowExplanation(false); }} style={{ padding: "10px 20px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: 8, fontWeight: "bold" }}>다시 풀기</button>
+              <div key={examId} style={{ 
+                padding: "15px 20px", backgroundColor: "#1E1E1E", borderRadius: 12, 
+                display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid #333", gap: 10
+              }}>
+                <div style={{ fontSize: "0.95rem", flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>📄 {examId}</div>
+                <button onClick={() => { setSelectedSession(examId); setIsSolving(true); setCurrentIndex(0); setShowExplanation(false); }} style={{ 
+                  padding: "10px 15px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: 8, 
+                  fontWeight: "bold", fontSize: "0.85rem", whiteSpace: "nowrap" 
+                }}>다시 풀기</button>
               </div>
             ))}
           </div>
