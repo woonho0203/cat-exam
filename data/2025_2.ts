@@ -234,7 +234,7 @@ const questions = [
   {
     id: 30,
     question: "FTA(Fault Tree Analysis)에 사용되는 논리기호와 명칭이 올바르게 연결된 것은?",
-    options: ["① [그림]: 전이기호", "② [그림]: 기본사상", "③ [그림]: 통상사상", "④ [그림]: 결함사상"],
+    options: ["① [마름모]: 전이기호", "② [직사각형]: 기본사상", "③ [위에 삼각형 밑에 사각형]: 통상사상", "④ [원]: 결함사상"],
     answer: 3,
     explanation: "FTA 기호:\n* 직사각형: 결함사상 (Top Event or Intermediate Event)\n* 원: 기본사상 (Basic Event)\n* 다이아몬드: 통상사상 (Undeveloped Event / 생략사상)\n* 삼각형: 전이기호 (Transfer Symbol)\n(문제의 그림을 볼 수 없으나 정답이 3번인 것으로 보아 3번이 올바르게 연결된 것임)",
     image: null,
