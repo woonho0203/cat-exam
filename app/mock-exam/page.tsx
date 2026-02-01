@@ -72,7 +72,7 @@ export default function MockExamPage() {
     return { subjectDetails, totalCorrect, totalSolved, currentTotalScore };
   }, [answers, mockQuestions]);
 
-  // 🔥 수정된 부분: 학습모드에서 재클릭 시 다음 문제 이동
+  // ✅ 다시 아무 보기나 선택하면 넘어가는 기능 포함
   const handleSelectAnswer = (originalNum: number) => {
     if (!isExamMode && result) {
       next();
@@ -113,12 +113,14 @@ export default function MockExamPage() {
     router.push("/result");
   };
 
+  // ✅ 번호키(1~4) 누르면 답 선택 및 다음 이동 기능 포함
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!q) return;
       if (['1', '2', '3', '4'].includes(e.key)) {
-        if (!isExamMode && result) next();
-        else {
+        if (!isExamMode && result) {
+          next();
+        } else {
           const opt = q.shuffledOptions[Number(e.key) - 1];
           if (opt) handleSelectAnswer(opt.originalNum);
         }
@@ -136,9 +138,13 @@ export default function MockExamPage() {
     <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "20px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         
-        {/* 상단바 */}
+        {/* 상단바: ✅ 몇년몇회차 출처 가독성 높게 표시 */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
-          <span style={{ fontWeight: "bold" }}>🎯 랜덤 모의고사 ({q.origin})</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: "1.2rem" }}>🎯</span>
+            <span style={{ fontWeight: "bold", fontSize: "1.1rem" }}>랜덤 모의고사</span>
+            <span style={{ backgroundColor: "#333", padding: "2px 8px", borderRadius: "5px", fontSize: "0.8rem", color: "#4FC3F7" }}>{q.origin} 출처</span>
+          </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <span style={{ color: "#FFD54F" }}>⏳ {Math.floor(seconds/60)}:{(seconds%60).toString().padStart(2,'0')}</span>
             <button onClick={() => {setIsExamMode(!isExamMode); setResult(null);}} style={{ padding: "6px 15px", borderRadius: 20, border: "none", backgroundColor: isExamMode ? "#444" : "#eee", color: isExamMode ? "white" : "black" }}>
@@ -216,7 +222,7 @@ export default function MockExamPage() {
               {result === "correct" ? "✅ 정답입니다!" : `❌ 오답 (정답: ${currentCorrectNum}번)`}
             </h3>
             <div style={{ lineHeight: "1.6", color: "#ddd" }}><strong>[해설]</strong> {q.explanation}</div>
-            <p style={{ textAlign: "center", color: "#666", marginTop: 15, fontSize: "0.8rem" }}>[Enter]나 보기를 다시 클릭하여 다음으로</p>
+            <p style={{ textAlign: "center", color: "#666", marginTop: 15, fontSize: "0.8rem" }}>[Enter]나 번호키, 또는 보기를 다시 클릭하여 다음으로</p>
           </div>
         )}
 
