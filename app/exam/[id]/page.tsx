@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import allQuestions from "../../../data";
 
-// 문제 객체 타입 정의 (타입 오류 방지용)
+// 문제 객체 타입 정의
 interface Question {
   id: number;
   question: string;
@@ -68,15 +68,23 @@ export default function ExamPage() {
     return { subjectDetails, totalCorrect, totalSolved, currentTotalScore };
   }, [answers, questions]);
 
+  // 🔥 수정된 핸들러: 선택 후 다시 누르면 다음으로 이동
   const handleSelectAnswer = (originalNum: number) => {
-    if (!isExamMode && result) return;
+    // 학습 모드에서 이미 결과를 보고 있는 상태라면 아무 보기나 눌러도 다음으로
+    if (!isExamMode && result) {
+      next();
+      return;
+    }
+
     const newAnswers = [...answers];
     newAnswers[index] = originalNum;
     setAnswers(newAnswers);
 
     if (isExamMode) {
+      // 실전 모드는 기존처럼 약간의 딜레이 후 자동 이동
       if (index < questions.length - 1) setTimeout(() => next(), 150);
     } else {
+      // 학습 모드는 정답/오답 상태만 세팅 (이후 클릭 시 위 로직에 의해 넘어감)
       setResult(originalNum === q.answer ? "correct" : "wrong");
     }
   };
@@ -86,8 +94,6 @@ export default function ExamPage() {
 
   const submit = () => {
     const savedWrongs = JSON.parse(localStorage.getItem("cbt-wrong-list") || "[]");
-    
-    // 🔥 오류 발생 지점 수정 (매개변수 타입 명시)
     const currentWrongs = questions
       .filter((que: any, i: number) => answers[i] !== 0 && answers[i] !== que.answer)
       .map((que: any) => ({ ...que, examId, addedAt: new Date().getTime() }));
@@ -97,7 +103,6 @@ export default function ExamPage() {
       .map((que: any) => `${examId}-${que.id}`);
 
     const filteredSaved = savedWrongs.filter((v: any) => !correctIds.includes(`${v.examId}-${v.id}`));
-
     const combined = [...currentWrongs, ...filteredSaved];
     const uniqueWrongs = combined.filter((v: any, i: number, a: any[]) => 
       a.findIndex((t: any) => t.id === v.id && t.examId === v.examId) === i
@@ -144,7 +149,7 @@ export default function ExamPage() {
           </div>
         </div>
 
-        {/* 🏆 종합 현황판 */}
+        {/* 종합 현황판 */}
         <div style={{ backgroundColor: "#1E1E1E", padding: "15px", borderRadius: "15px", border: "1px solid #333", marginBottom: "15px", display: "flex", justifyContent: "space-around", alignItems: "center" }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: "0.7rem", color: "#aaa" }}>진행도</div>
@@ -160,7 +165,7 @@ export default function ExamPage() {
           </div>
         </div>
 
-        {/* 📊 과목별 타일 */}
+        {/* 과목별 타일 */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "6px", marginBottom: "25px" }}>
           {stats.subjectDetails.map((item, i) => (
             <div key={i} style={{ 
@@ -184,7 +189,7 @@ export default function ExamPage() {
           </div>
         )}
 
-        {/* 보기 영역: 정답/오답 색상 로직 강화 */}
+        {/* 보기 영역 */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 30 }}>
           {q.shuffledOptions.map((opt: any, i: number) => {
             const isSelected = answers[index] === opt.originalNum;
@@ -213,7 +218,7 @@ export default function ExamPage() {
               {result === "correct" ? "✅ 정답입니다!" : `❌ 오답 (정답: ${currentCorrectNum}번)`}
             </h3>
             <div style={{ lineHeight: "1.6", color: "#ddd" }}><strong>[해설]</strong> {q.explanation}</div>
-            <p style={{ textAlign: "center", color: "#666", marginTop: 15, fontSize: "0.8rem" }}>[Enter]를 눌러 다음으로</p>
+            <p style={{ textAlign: "center", color: "#666", marginTop: 15, fontSize: "0.8rem" }}>[Enter]나 보기를 다시 클릭하여 다음으로</p>
           </div>
         )}
 

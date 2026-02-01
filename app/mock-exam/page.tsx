@@ -17,9 +17,8 @@ const shuffleArray = (array: any[]) => {
 export default function MockExamPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sector = searchParams.get("type") || "safety"; // 메인에서 넘겨준 자격증 타입 받기
+  const sector = searchParams.get("type") || "safety";
 
-  // 1. [랜덤 생성] 과목별 20문제씩 총 120문제 추출 (중복 방지 및 출처 포함)
   const mockQuestions = useMemo(() => {
     const subjects: any[][] = [[], [], [], [], [], []];
     
@@ -47,7 +46,7 @@ export default function MockExamPage() {
   const [answers, setAnswers] = useState<number[]>([]);
   const [result, setResult] = useState<"correct" | "wrong" | null>(null);
   const [seconds, setSeconds] = useState(0);
-  const [isExamMode, setIsExamMode] = useState(false); // 문제풀이창과 동일하게 학습모드 기본
+  const [isExamMode, setIsExamMode] = useState(false);
 
   const q = mockQuestions[index];
   const currentCorrectNum = useMemo(() => q ? q.shuffledOptions.findIndex((opt: any) => opt.originalNum === q.answer) + 1 : 0, [q]);
@@ -58,7 +57,6 @@ export default function MockExamPage() {
     return () => clearInterval(timer);
   }, [mockQuestions]);
 
-  // 🏆 [동일 로직] 종합 현황판 데이터 계산
   const stats = useMemo(() => {
     if (mockQuestions.length === 0) return null;
     const totalCorrect = answers.filter((ans, idx) => mockQuestions[idx] && ans === mockQuestions[idx].answer).length;
@@ -74,8 +72,13 @@ export default function MockExamPage() {
     return { subjectDetails, totalCorrect, totalSolved, currentTotalScore };
   }, [answers, mockQuestions]);
 
+  // 🔥 수정된 부분: 학습모드에서 재클릭 시 다음 문제 이동
   const handleSelectAnswer = (originalNum: number) => {
-    if (!isExamMode && result) return;
+    if (!isExamMode && result) {
+      next();
+      return;
+    }
+
     const newAnswers = [...answers];
     newAnswers[index] = originalNum;
     setAnswers(newAnswers);
@@ -91,7 +94,6 @@ export default function MockExamPage() {
   const prev = () => { if (index > 0) { setIndex(index - 1); setResult(null); } };
 
   const submit = () => {
-    // 📝 [동일 로직] 오답 노트 자동 생성
     const savedWrongs = JSON.parse(localStorage.getItem("cbt-wrong-list") || "[]");
     const currentWrongs = mockQuestions
       .filter((que, i) => answers[i] !== 0 && answers[i] !== que.answer)
@@ -111,7 +113,6 @@ export default function MockExamPage() {
     router.push("/result");
   };
 
-  // ⌨️ [동일 로직] 키보드 연타 제어
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!q) return;
@@ -146,7 +147,7 @@ export default function MockExamPage() {
           </div>
         </div>
 
-        {/* 🏆 종합 현황판 */}
+        {/* 종합 현황판 */}
         <div style={{ backgroundColor: "#1E1E1E", padding: "15px", borderRadius: "15px", border: "1px solid #333", marginBottom: "15px", display: "flex", justifyContent: "space-around", alignItems: "center" }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: "0.7rem", color: "#aaa" }}>진행도</div>
@@ -162,7 +163,7 @@ export default function MockExamPage() {
           </div>
         </div>
 
-        {/* 📊 과목별 타일 */}
+        {/* 과목별 타일 */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "6px", marginBottom: "25px" }}>
           {stats.subjectDetails.map((item, i) => (
             <div key={i} style={{ 
@@ -186,7 +187,7 @@ export default function MockExamPage() {
           </div>
         )}
 
-        {/* 보기 영역: 정답/오답 색상 동일 적용 */}
+        {/* 보기 영역 */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 30 }}>
           {q.shuffledOptions.map((opt: any, i: number) => {
             const isSelected = answers[index] === opt.originalNum;
@@ -208,14 +209,14 @@ export default function MockExamPage() {
           })}
         </div>
 
-        {/* 해설창: 문제풀이창과 동일 */}
+        {/* 해설창 */}
         {!isExamMode && result && (
           <div style={{ backgroundColor: "#1E1E1E", padding: 25, borderRadius: 15, border: `1px solid ${result === "correct" ? "#4CAF50" : "#FF5252"}`, marginBottom: 30 }}>
             <h3 style={{ margin: "0 0 10px 0", color: result === "correct" ? "#81C784" : "#FF5252" }}>
               {result === "correct" ? "✅ 정답입니다!" : `❌ 오답 (정답: ${currentCorrectNum}번)`}
             </h3>
             <div style={{ lineHeight: "1.6", color: "#ddd" }}><strong>[해설]</strong> {q.explanation}</div>
-            <p style={{ textAlign: "center", color: "#666", marginTop: 15, fontSize: "0.8rem" }}>번호키를 눌러 다음 문제로</p>
+            <p style={{ textAlign: "center", color: "#666", marginTop: 15, fontSize: "0.8rem" }}>[Enter]나 보기를 다시 클릭하여 다음으로</p>
           </div>
         )}
 
