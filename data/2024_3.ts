@@ -400,7 +400,7 @@ const questions = [
     ],
     answer: 4,
     explanation: "절단 및 평면 연삭기의 노출각도는 150° 이내로 하며, 숫돌 주축에서 수평면 밑으로 이루는 덮개의 각도는 15°가 되도록 설치해야 합니다.",
-    image: null,
+    image: "/images/2024-3-41.png",
   },
   {
     id: 42,
