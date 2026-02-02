@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react"; // Suspense 추가
 import { useRouter, useSearchParams } from "next/navigation";
 import allQuestions from "../../data";
 
@@ -14,7 +14,8 @@ const shuffleArray = (array: any[]) => {
   return shuffled;
 };
 
-export default function MockExamPage() {
+// 실제 모의고사 로직을 담은 내부 컴포넌트
+function MockExamContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sector = searchParams.get("type") || "safety";
@@ -72,17 +73,17 @@ export default function MockExamPage() {
     return { subjectDetails, totalCorrect, totalSolved, currentTotalScore };
   }, [answers, mockQuestions]);
 
-  // ✅ 다시 아무 보기나 선택하면 넘어가는 기능 포함
+  const next = () => { if (index < mockQuestions.length - 1) { setIndex(index + 1); setResult(null); } };
+  const prev = () => { if (index > 0) { setIndex(index - 1); setResult(null); } };
+
   const handleSelectAnswer = (originalNum: number) => {
     if (!isExamMode && result) {
       next();
       return;
     }
-
     const newAnswers = [...answers];
     newAnswers[index] = originalNum;
     setAnswers(newAnswers);
-
     if (isExamMode) {
       if (index < mockQuestions.length - 1) setTimeout(() => next(), 150);
     } else {
@@ -90,21 +91,16 @@ export default function MockExamPage() {
     }
   };
 
-  const next = () => { if (index < mockQuestions.length - 1) { setIndex(index + 1); setResult(null); } };
-  const prev = () => { if (index > 0) { setIndex(index - 1); setResult(null); } };
-
   const submit = () => {
     const savedWrongs = JSON.parse(localStorage.getItem("cbt-wrong-list") || "[]");
     const currentWrongs = mockQuestions
       .filter((que, i) => answers[i] !== 0 && answers[i] !== que.answer)
       .map(que => ({ ...que, examId: que.origin, addedAt: new Date().getTime() }));
-
     const correctIds = mockQuestions.filter((que, i) => answers[i] === que.answer).map(que => `${que.origin}-${que.id}`);
     const filteredSaved = savedWrongs.filter((v: any) => !correctIds.includes(`${v.examId}-${v.id}`));
     const uniqueWrongs = [...currentWrongs, ...filteredSaved].filter((v, i, a) => 
       a.findIndex(t => t.id === v.id && t.examId === v.examId) === i
     );
-
     localStorage.setItem("cbt-wrong-list", JSON.stringify(uniqueWrongs));
     localStorage.setItem("cbt-answers", JSON.stringify(answers));
     localStorage.setItem("cbt-mock-questions", JSON.stringify(mockQuestions));
@@ -113,14 +109,12 @@ export default function MockExamPage() {
     router.push("/result");
   };
 
-  // ✅ 번호키(1~4) 누르면 답 선택 및 다음 이동 기능 포함
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!q) return;
       if (['1', '2', '3', '4'].includes(e.key)) {
-        if (!isExamMode && result) {
-          next();
-        } else {
+        if (!isExamMode && result) { next(); } 
+        else {
           const opt = q.shuffledOptions[Number(e.key) - 1];
           if (opt) handleSelectAnswer(opt.originalNum);
         }
@@ -137,8 +131,7 @@ export default function MockExamPage() {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "20px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        
-        {/* 상단바: ✅ 몇년몇회차 출처 가독성 높게 표시 */}
+        {/* UI 코드 (기존과 동일) */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: "1.2rem" }}>🎯</span>
@@ -153,7 +146,6 @@ export default function MockExamPage() {
           </div>
         </div>
 
-        {/* 종합 현황판 */}
         <div style={{ backgroundColor: "#1E1E1E", padding: "15px", borderRadius: "15px", border: "1px solid #333", marginBottom: "15px", display: "flex", justifyContent: "space-around", alignItems: "center" }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: "0.7rem", color: "#aaa" }}>진행도</div>
@@ -169,7 +161,6 @@ export default function MockExamPage() {
           </div>
         </div>
 
-        {/* 과목별 타일 */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "6px", marginBottom: "25px" }}>
           {stats.subjectDetails.map((item, i) => (
             <div key={i} style={{ 
@@ -182,7 +173,6 @@ export default function MockExamPage() {
           ))}
         </div>
 
-        {/* 문제 영역 */}
         <h2 style={{ backgroundColor: "#1E1E1E", padding: "20px", borderRadius: "12px", border: "1px solid #333", marginBottom: 20 }}>
           <span style={{ color: "#4FC3F7", marginRight: 10 }}>Q{index + 1}.</span>{q.question}
         </h2>
@@ -193,20 +183,15 @@ export default function MockExamPage() {
           </div>
         )}
 
-        {/* 보기 영역 */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 30 }}>
           {q.shuffledOptions.map((opt: any, i: number) => {
             const isSelected = answers[index] === opt.originalNum;
             let bgColor = "#2C2C2C";
             let borderColor = "#333";
-
             if (!isExamMode && result) {
               if (opt.originalNum === q.answer) { bgColor = "#1B5E20"; borderColor = "#4CAF50"; } 
               else if (isSelected) { bgColor = "#3E2723"; borderColor = "#FF5252"; }
-            } else if (isSelected) {
-              bgColor = "#1565C0"; borderColor = "#64B5F6";
-            }
-
+            } else if (isSelected) { bgColor = "#1565C0"; borderColor = "#64B5F6"; }
             return (
               <div key={i} onClick={() => handleSelectAnswer(opt.originalNum)} style={{ padding: "16px 20px", borderRadius: "10px", backgroundColor: bgColor, border: `2px solid ${borderColor}`, cursor: "pointer" }}>
                 {i + 1}. {opt.text}
@@ -215,7 +200,6 @@ export default function MockExamPage() {
           })}
         </div>
 
-        {/* 해설창 */}
         {!isExamMode && result && (
           <div style={{ backgroundColor: "#1E1E1E", padding: 25, borderRadius: 15, border: `1px solid ${result === "correct" ? "#4CAF50" : "#FF5252"}`, marginBottom: 30 }}>
             <h3 style={{ margin: "0 0 10px 0", color: result === "correct" ? "#81C784" : "#FF5252" }}>
@@ -226,7 +210,6 @@ export default function MockExamPage() {
           </div>
         )}
 
-        {/* 하단 버튼 */}
         <div style={{ display: "flex", gap: 12, justifyContent: "center", paddingBottom: 60 }}>
           <button onClick={prev} disabled={index === 0} style={{ padding: "14px 28px", background: "#333", color: "white", borderRadius: 10, border: "none" }}>이전</button>
           <button onClick={index === mockQuestions.length - 1 ? submit : next} style={{ padding: "14px 35px", background: index === mockQuestions.length - 1 ? "#4CAF50" : "#2196F3", color: "white", borderRadius: 10, border: "none", fontWeight: "bold" }}>
@@ -235,5 +218,14 @@ export default function MockExamPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// 🚦 메인 페이지 컴포넌트 (Suspense로 감싸기)
+export default function MockExamPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", display: "flex", justifyContent: "center", alignItems: "center" }}>모의고사 불러오는 중...</div>}>
+      <MockExamContent />
+    </Suspense>
   );
 }
