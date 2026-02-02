@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react"; // Suspense 추가
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import allQuestions from "../../data";
 
@@ -131,17 +131,71 @@ function MockExamContent() {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "20px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        {/* UI 코드 (기존과 동일) */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: "1.2rem" }}>🎯</span>
-            <span style={{ fontWeight: "bold", fontSize: "1.1rem" }}>랜덤 모의고사</span>
-            <span style={{ backgroundColor: "#333", padding: "2px 8px", borderRadius: "5px", fontSize: "0.8rem", color: "#4FC3F7" }}>{q.origin} 출처</span>
+        
+        {/* 수정된 모바일 최적화 상단바 */}
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "space-between", 
+          alignItems: "center", 
+          marginBottom: 15,
+          gap: "8px",
+          flexWrap: "nowrap" 
+        }}>
+          <div style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: "6px", 
+            overflow: "hidden", 
+            whiteSpace: "nowrap" 
+          }}>
+            <span style={{ fontSize: "clamp(1rem, 4vw, 1.2rem)" }}>🎯</span>
+            <span style={{ 
+              fontWeight: "bold", 
+              fontSize: "clamp(0.85rem, 3.8vw, 1.05rem)", 
+              letterSpacing: "-0.02em"
+            }}>
+              랜덤 모의고사
+            </span>
+            <span style={{ 
+              backgroundColor: "#333", 
+              padding: "2px 6px", 
+              borderRadius: "5px", 
+              fontSize: "0.65rem", 
+              color: "#4FC3F7",
+              flexShrink: 0 
+            }}>
+              {q.origin}
+            </span>
           </div>
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <span style={{ color: "#FFD54F" }}>⏳ {Math.floor(seconds/60)}:{(seconds%60).toString().padStart(2,'0')}</span>
-            <button onClick={() => {setIsExamMode(!isExamMode); setResult(null);}} style={{ padding: "6px 15px", borderRadius: 20, border: "none", backgroundColor: isExamMode ? "#444" : "#eee", color: isExamMode ? "white" : "black" }}>
-              {isExamMode ? "실전모드" : "학습모드"}
+
+          <div style={{ 
+            display: "flex", 
+            gap: "6px", 
+            alignItems: "center",
+            flexShrink: 0 
+          }}>
+            <span style={{ 
+              color: "#FFD54F", 
+              fontSize: "0.85rem", 
+              fontWeight: "bold",
+              whiteSpace: "nowrap"
+            }}>
+              ⏳ {Math.floor(seconds/60)}:{(seconds%60).toString().padStart(2,'0')}
+            </span>
+            <button 
+              onClick={() => {setIsExamMode(!isExamMode); setResult(null);}} 
+              style={{ 
+                padding: "4px 8px", 
+                borderRadius: 12, 
+                border: "none", 
+                backgroundColor: isExamMode ? "#444" : "#eee", 
+                color: isExamMode ? "white" : "black",
+                fontSize: "0.7rem",
+                fontWeight: "bold",
+                cursor: "pointer"
+              }}
+            >
+              {isExamMode ? "실전" : "학습"}
             </button>
           </div>
         </div>
