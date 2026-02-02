@@ -99,7 +99,7 @@ const questions = [
     question: "레빈(Lewin)은 인간의 행동 특성을 다음과 같이 표현하였다. 변수 ‘E’가 의미하는 것은? [B = f(P·E)]",
     options: ["연령", "성격", "환경", "지능"],
     answer: 3,
-    explanation: "레빈의 법칙 $B = f(P \\cdot E)$에서 $E$는 Environment(환경)를 의미하며, 인간관계나 작업환경 등 심리적 환경을 포함합니다.",
+    explanation: "레빈의 법칙 B = f(P \\cdot E)에서 E는 Environment(환경)를 의미하며, 인간관계나 작업환경 등 심리적 환경을 포함합니다.",
     image: null,
   },
   {
@@ -107,7 +107,7 @@ const questions = [
     question: "하인리히의 재해구성비율 “1 : 29 : 300”에서 “29”에 해당되는 사고발생비율은?",
     options: ["8.8%", "9.8%", "10.8%", "11.8%"],
     answer: 1,
-    explanation: "전체 사고 330건 중 경상(29건)의 비율은 $(29 / 330) \\times 100 \\approx 8.79\\%$로 약 8.8%입니다.",
+    explanation: "전체 사고 330건 중 경상(29건)의 비율은 (29 / 330) \\times 100 \\approx 8.79\\%로 약 8.8%입니다.",
     image: null,
   },
   {
@@ -194,7 +194,7 @@ const questions = [
     question: "각 부품의 신뢰도가 R인 다음과 같은 시스템(R - (R//R) - R)의 전체 신뢰도는?",
     options: ["R⁴", "2R - R²", "2R² - R³", "2R³ - R⁴"],
     answer: 4,
-    explanation: "계산식은 $R \\times [1 - (1 - R)(1 - R)] \\times R = R^2 \\times (2R - R^2) = 2R^3 - R^4$ 입니다.",
+    explanation: "계산식은 R \\times [1 - (1 - R)(1 - R)] \\times R = R^2 \\times (2R - R^2) = 2R^3 - R^4 입니다.",
     image: null,
   },
   {
@@ -218,7 +218,7 @@ const questions = [
     question: "다음 중 불대수의 관계식으로 틀린 것은?",
     options: ["A + AB = A", "A(A + B) = A + B", "A + ĀB = A + B", "A + Ā = 1"],
     answer: 2,
-    explanation: "흡수법칙에 의해 $A(A + B) = AA + AB = A + AB = A(1 + B) = A$가 되어야 합니다.",
+    explanation: "흡수법칙에 의해 A(A + B) = AA + AB = A + AB = A(1 + B) = A가 되어야 합니다.",
     image: null,
   },
   {
@@ -231,10 +231,10 @@ const questions = [
   },
   {
     id: 26,
-    question: "평균 고장간격 시간이 $4 \\times 10^6$시간인 요소 4개가 직렬체계를 이루었을 때, 이 체계의 수명은 몇 시간인가?",
-    options: ["$1 \\times 10^6$", "$4 \\times 10^6$", "$8 \\times 10^6$", "$16 \\times 10^6$"],
+    question: "평균 고장간격 시간이 4 \\times 10^6시간인 요소 4개가 직렬체계를 이루었을 때, 이 체계의 수명은 몇 시간인가?",
+    options: ["1 \\times 10^6", "4 \\times 10^6", "8 \\times 10^6", "16 \\times 10^6"],
     answer: 1,
-    explanation: "직렬 체계의 수명은 (개별 요소의 평균 수명 / 요소 수)입니다. 따라서 $4 \\times 10^6 / 4 = 1 \\times 10^6$ 시간입니다.",
+    explanation: "직렬 체계의 수명은 (개별 요소의 평균 수명 / 요소 수)입니다. 따라서 4 \\times 10^6 / 4 = 1 \\times 10^6 시간입니다.",
     image: null,
   },
   {
@@ -770,7 +770,7 @@ const questions = [
       "CO₂ = 4, H₂O = 1"
     ],
     answer: 2,
-    explanation: "연소 반응식 $C_{2}H_{5}OH + 3O_{2} \\rightarrow 2CO_{2} + 3H_{2}O$에 의해 CO₂는 2몰, H₂O는 3몰이 생성됩니다.",
+    explanation: "연소 반응식 C_{2}H_{5}OH + 3O_{2} \\rightarrow 2CO_{2} + 3H_{2}O에 의해 CO₂는 2몰, H₂O는 3몰이 생성됩니다.",
     image: null,
   },
   {
@@ -1090,7 +1090,7 @@ const questions = [
     question: "보통흙의 건지를 굴착면의 기울기 1 : 0.5로 하고자 할 경우, 높이가 5m라면 하단 너비 Z의 길이는?",
     options: ["2m", "2.5m", "3m", "5m"],
     answer: 2,
-    explanation: "기울기 1 : 0.5는 수직 높이가 1일 때 수평 거리가 0.5라는 뜻입니다. 높이가 5m이므로 하단 너비는 $5 \\times 0.5 = 2.5m$가 됩니다.",
+    explanation: "기울기 1 : 0.5는 수직 높이가 1일 때 수평 거리가 0.5라는 뜻입니다. 높이가 5m이므로 하단 너비는 5 \\times 0.5 = 2.5m가 됩니다.",
     image: null,
   },
   {

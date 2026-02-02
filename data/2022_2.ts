@@ -296,7 +296,7 @@ const questions = [
       "MTTF x (q1 x q2 x ... x qn)"
     ],
     answer: 3,
-    explanation: "요소의 수명이 지수 분포를 따르는 병렬 체계의 시스템 수명은 $MTTF \times (1 + \frac{1}{2} + \dots + \frac{1}{n})$ 공식으로 계산합니다.",
+    explanation: "요소의 수명이 지수 분포를 따르는 병렬 체계의 시스템 수명은 MTTF \times (1 + \frac{1}{2} + \dots + \frac{1}{n}) 공식으로 계산합니다.",
     image: null,
   },
   {
@@ -328,7 +328,7 @@ const questions = [
     question: "태양광선이 내리쬐는 옥외장소의 자연습구온도 20℃, 흑구온도 18℃, 건구온도 30℃일 때 습구흑구온도지수(WBGT)는?",
     options: ["20.6℃", "22.5℃", "25.0℃", "28.5℃"],
     answer: 1,
-    explanation: "태양이 내리쬐는 실외 WBGT 공식은 $(0.7 \times NWB) + (0.2 \times GT) + (0.1 \times DB)$입니다. 계산하면 $(0.7 \times 20) + (0.2 \times 18) + (0.1 \times 30) = 14 + 3.6 + 3 = 20.6$입니다.",
+    explanation: "태양이 내리쬐는 실외 WBGT 공식은 (0.7 \times NWB) + (0.2 \times GT) + (0.1 \times DB)입니다. 계산하면 (0.7 \times 20) + (0.2 \times 18) + (0.1 \times 30) = 14 + 3.6 + 3 = 20.6입니다.",
     image: null,
   },
   {
@@ -433,7 +433,7 @@ const questions = [
     question: "인장강도가 250N/mm²인 강판에서 안전율이 4라면 이 강판의 허용응력(N/mm²)은 얼마인가?",
     options: ["42.5", "62.5", "82.5", "102.5"],
     answer: 2,
-    explanation: "허용응력은 극한강도(인장강도)를 안전율로 나눈 값입니다. $250 / 4 = 62.5$N/mm² 입니다.",
+    explanation: "허용응력은 극한강도(인장강도)를 안전율로 나눈 값입니다. 250 / 4 = 62.5N/mm² 입니다.",
     image: null,
   },
   {
@@ -454,7 +454,7 @@ const questions = [
     question: "광전자식 방호장치의 일반구조 중 사용전원전압의 변동에 대하여 정상 작동해야 하는 범위는?",
     options: ["± (100분의 10)", "± (100분의 15)", "± (100분의 20)", "± (100분의 25)"],
     answer: 3,
-    explanation: "방호장치는 전원전압의 $\pm 20\%$ 변동에 대하여 정상적으로 작동되는 구조이어야 합니다.",
+    explanation: "방호장치는 전원전압의 \pm 20\% 변동에 대하여 정상적으로 작동되는 구조이어야 합니다.",
     image: null,
   },
   {
@@ -512,7 +512,7 @@ const questions = [
     question: "중량 3kN의 화물을 2줄 사이의 각도 55°로 매달았을 때 와이어에 걸리는 장력은 약 몇 kN인가?",
     options: ["1.3", "1.7", "2.0", "2.3"],
     answer: 2,
-    explanation: "장력 $T = (P / 2) / \cos(\theta / 2)$ 공식에 따라, $(3 / 2) / \cos(27.5^\circ) \approx 1.5 / 0.887 \approx 1.69$입니다. 약 1.7kN입니다.",
+    explanation: "장력 T = (P / 2) / \cos(\theta / 2) 공식에 따라, (3 / 2) / \cos(27.5^\circ) \approx 1.5 / 0.887 \approx 1.69입니다. 약 1.7kN입니다.",
     image: null,
   },
   {
@@ -549,7 +549,7 @@ const questions = [
     question: "대지에서 용접작업을 하고 있는 작업자가 용접봉에 접촉한 경우 통전전류는? (단, 용접기의 출력 측 무부하전압 : 90V, 접촉저항(손, 용접봉 등 포함) : 10kΩ, 인체의 내부저항 : 1kΩ, 발과 대지의 접촉저항 : 20kΩ 이다.)",
     options: ["약 0.19mA", "약 0.29mA", "약 1.96mA", "약 2.90mA"],
     answer: 4,
-    explanation: "옴의 법칙($I = V / R$)을 이용합니다. 전체 저항 $R = 10,000 + 1,000 + 20,000 = 31,000\Omega$입니다. 따라서 $I = 90 / 31,000 \approx 0.00290A$, 즉 2.90mA가 흐르게 됩니다.",
+    explanation: "옴의 법칙(I = V / R)을 이용합니다. 전체 저항 R = 10,000 + 1,000 + 20,000 = 31,000\Omega입니다. 따라서 I = 90 / 31,000 \approx 0.00290A, 즉 2.90mA가 흐르게 됩니다.",
     image: null,
   },
   {
@@ -662,7 +662,7 @@ const questions = [
     question: "교류 아크용접기의 무부하 전압 80V, 아크 전압 25V, 아크 전류 300A, 내부손실 4kW일 때 효율은 약 몇 %인가?",
     options: ["65.2", "70.5", "75.3", "80.6"],
     answer: 1,
-    explanation: "출력($25V \times 300A = 7.5kW$)을 전체 입력(출력+손실 = $7.5kW + 4kW = 11.5kW$)으로 나누어 계산하면 $7.5 / 11.5 \approx 65.2\%$가 됩니다.",
+    explanation: "출력(25V \times 300A = 7.5kW)을 전체 입력(출력+손실 = 7.5kW + 4kW = 11.5kW)으로 나누어 계산하면 7.5 / 11.5 \approx 65.2\%가 됩니다.",
     image: null,
   },
   {
@@ -720,7 +720,7 @@ const questions = [
     question: "통전시간 1초, 인체 저항 500Ω일 때 심실세동을 일으키는 위험한계 에너지는 약 얼마인가?",
     options: ["0.52 cal", "1.35 cal", "2.14 cal", "3.27 cal"],
     answer: 4,
-    explanation: "위험한계 에너지 $W = I^2Rt$입니다. 1초 시 심실세동전류를 적용해 구하면 약 13.6J이며, 이를 칼로리로 환산($13.6 \times 0.24$)하면 약 3.27cal가 됩니다.",
+    explanation: "위험한계 에너지 W = I^2Rt입니다. 1초 시 심실세동전류를 적용해 구하면 약 13.6J이며, 이를 칼로리로 환산(13.6 \times 0.24)하면 약 3.27cal가 됩니다.",
     image: null,
   },
   {
@@ -767,10 +767,10 @@ const questions = [
   },
   {
     id: 83,
-    question: "부탄(C₄H₁₀)의 화학양론농도($C_{st}$)가 3.12%일 때, Jones 식을 이용한 폭발하한계는 약 몇 vol%인가?",
+    question: "부탄(C₄H₁₀)의 화학양론농도(C_{st})가 3.12%일 때, Jones 식을 이용한 폭발하한계는 약 몇 vol%인가?",
     options: ["1.4", "1.7", "2.0", "2.3"],
     answer: 2,
-    explanation: "Jones 식에 따르면 폭발하한계($L$)는 화학양론농도의 약 55%입니다. 즉, $3.12 \times 0.55 \approx 1.7\%$입니다.",
+    explanation: "Jones 식에 따르면 폭발하한계(L)는 화학양론농도의 약 55%입니다. 즉, 3.12 \times 0.55 \approx 1.7\%입니다.",
     image: null,
   },
   {
@@ -841,7 +841,7 @@ const questions = [
     question: "두께 0.2m 단열재(열전도율 0.037)의 내면 40℃, 외면 20℃일 때, 1m²당 1시간에 손실되는 열량(kcal)은?",
     options: ["0.0037", "0.037", "1.37", "3.7"],
     answer: 4,
-    explanation: "열전달 공식 $Q = (k \times A \times \Delta t) / L$을 이용합니다. $(0.037 \times 1 \times 20) / 0.2 = 3.7$kcal가 계산됩니다.",
+    explanation: "열전달 공식 Q = (k \times A \times \Delta t) / L을 이용합니다. (0.037 \times 1 \times 20) / 0.2 = 3.7kcal가 계산됩니다.",
     image: null,
   },
   {
@@ -894,7 +894,7 @@ const questions = [
     question: "알루미늄분이 고온의 물과 반응하였을 때 생성되는 가스는?",
     options: ["이산화탄소", "수소", "메탄", "에탄"],
     answer: 2,
-    explanation: "알루미늄분은 물과 반응할 경우 수소($H_2$) 가스를 발생시키며 폭발 위험을 초래합니다.",
+    explanation: "알루미늄분은 물과 반응할 경우 수소(H_2) 가스를 발생시키며 폭발 위험을 초래합니다.",
     image: null,
   },
   {
@@ -910,7 +910,7 @@ const questions = [
     question: "다음 중 공기 중 최소 발화에너지(MIE) 값이 가장 작은 물질은?",
     options: ["에틸렌", "아세트알데히드", "메탄", "에탄"],
     answer: 1,
-    explanation: "제시된 물질 중 에틸렌의 최소 발화에너지가 $0.096 \times 10^{-3}$J로 가장 작아 점화원에 의해 가장 쉽게 발화될 수 있습니다.",
+    explanation: "제시된 물질 중 에틸렌의 최소 발화에너지가 0.096 \times 10^{-3}J로 가장 작아 점화원에 의해 가장 쉽게 발화될 수 있습니다.",
     image: null,
   },
   {

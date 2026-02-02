@@ -358,7 +358,7 @@ const questions = [
     question: "불（Boole）대수의 정리를 나타낸 관계식으로 틀린 것은?",
     options: ["A · A = A", "A + A' = 0", "A + AB = A", "A + A = A"],
     answer: 2,
-    explanation: "불 대수의 정리에서 $A + A' = 1$입니다.",
+    explanation: "불 대수의 정리에서 A + A' = 1입니다.",
     image: null,
   },
   {
@@ -387,7 +387,7 @@ const questions = [
     question: "다음 중 안전계수를 나타내는 식으로 옳은 것은?",
     options: ["허용응력 / 최대설계응력", "극한강도 / 허용응력", "안전하중 / 파괴하중", "파단하중 / 최대사용하중"],
     answer: 2,
-    explanation: "안전계수(안전율)는 재료의 극한강도를 허용응력으로 나눈 값($\\frac{극한강도}{허용응력}$) 또는 파괴하중을 사용하중으로 나눈 값을 의미합니다.",
+    explanation: "안전계수(안전율)는 재료의 극한강도를 허용응력으로 나눈 값(\\frac{극한강도}{허용응력}) 또는 파괴하중을 사용하중으로 나눈 값을 의미합니다.",
     image: null,
   },
   {
@@ -395,7 +395,7 @@ const questions = [
     question: "지게차의 중량이 8kN, 화물 중량이 2kN, 앞바퀴에서 화물의 무게중심까지의 최단 거리가 0.5m이면 지게차가 안정되기 위한 앞바퀴에서 지게차의 무게중심까지의 거리는 최소 몇 m 이상이어야 하는가?",
     options: ["0.450", "0.325", "0.225", "0.125"],
     answer: 4,
-    explanation: "지게차의 안정 조건식($W \\times a < G \\times b$)을 이용합니다. $2kN \\times 0.5m < 8kN \\times X$ 를 풀면 $1 < 8X$가 되어 $X > 0.125m$가 됩니다. 따라서 최소 0.125m 이상이어야 합니다.",
+    explanation: "지게차의 안정 조건식(W \\times a < G \\times b)을 이용합니다. 2kN \\times 0.5m < 8kN \\times X 를 풀면 1 < 8X가 되어 X > 0.125m가 됩니다. 따라서 최소 0.125m 이상이어야 합니다.",
     image: null,
   },
   {
@@ -493,7 +493,7 @@ const questions = [
     question: "숫돌지름이 60cm인 경우 숫돌 고정장치인 평형 플랜지 지름은 몇 cm 이상이어야 하는가?",
     options: ["10cm", "20cm", "30cm", "60cm"],
     answer: 2,
-    explanation: "플랜지의 지름은 숫돌 지름의 1/3 이상이어야 합니다. $60cm \\times \\frac{1}{3} = 20cm$ 이므로 20cm 이상이 정답입니다.",
+    explanation: "플랜지의 지름은 숫돌 지름의 1/3 이상이어야 합니다. 60cm \\times \\frac{1}{3} = 20cm 이므로 20cm 이상이 정답입니다.",
     image: null,
   },
   {
@@ -509,7 +509,7 @@ const questions = [
     question: "질량이 100kg인 물체를 2개의 와이어로프로 매달아 옮기고자 할 때(각도 120도), 와이어에 걸리는 장력은 약 몇 N인가?",
     options: ["200", "400", "490", "980"],
     answer: 4,
-    explanation: "매달기 각도가 120도일 때 장력은 물체 무게와 같아집니다. $100kg \\times 9.8m/s^2 = 980N$입니다.",
+    explanation: "매달기 각도가 120도일 때 장력은 물체 무게와 같아집니다. 100kg \\times 9.8m/s^2 = 980N입니다.",
     image: null,
   },
   {
@@ -530,7 +530,7 @@ const questions = [
     question: "허용응력이 1kN/mm²이고, 단면적이 2mm²인 강판의 극한하중이 4,000N이라면 안전율은 얼마인가?",
     options: ["2", "4", "5", "50"],
     answer: 1,
-    explanation: "허용하중 = 허용응력 $\\times$ 단면적 = $1kN/mm^2 \\times 2mm^2 = 2kN = 2,000N$. 안전율 = $\\frac{극한하중}{허용하중} = \\frac{4,000}{2,000} = 2$입니다.",
+    explanation: "허용하중 = 허용응력 \\times 단면적 = 1kN/mm^2 \\times 2mm^2 = 2kN = 2,000N. 안전율 = \\frac{극한하중}{허용하중} = \\frac{4,000}{2,000} = 2입니다.",
     image: null,
   },
   {
@@ -577,7 +577,7 @@ const questions = [
     question: "어떤 부도체에서 정전용량이 10pF이고, 전압이 5,000V일 때 전하량은?",
     options: ["2X10⁻¹⁴C", "2X10⁻⁸C", "5X10⁻⁸C", "5X10⁻²C"],
     answer: 3,
-    explanation: "전하량 $Q = C \\times V$입니다. $10 \\times 10^{-12}F \\times 5,000V = 5 \\times 10^{-8}C$가 됩니다.",
+    explanation: "전하량 Q = C \\times V입니다. 10 \\times 10^{-12}F \\times 5,000V = 5 \\times 10^{-8}C가 됩니다.",
     image: null,
   },
   {
@@ -699,7 +699,7 @@ const questions = [
     question: "과전류에 의해 절연물이 화구가 없더라도 자연적으로 발화하고 심선이 용단되는 발화단계의 전선 전류밀도(A/mm²)는?",
     options: ["10~20", "30〜50", "60〜120", "130-200"],
     answer: 3,
-    explanation: "과전류 발화 단계에서의 전류밀도는 약 60~120$A/mm^2$ 정도입니다. 120 이상이 되면 전선이 녹아 끊어지는 용단 단계로 넘어갑니다.",
+    explanation: "과전류 발화 단계에서의 전류밀도는 약 60~120A/mm^2 정도입니다. 120 이상이 되면 전선이 녹아 끊어지는 용단 단계로 넘어갑니다.",
     image: null,
   },
   {
@@ -707,7 +707,7 @@ const questions = [
     question: "인체의 표면적이 0.5m²이고 정전용량은 0.02μF/cm²일 때, 3,300V의 전압에서 축적되는 정전기에너지(J)는?",
     options: ["5.445X10⁻²", "5.445X10⁻⁴", "2.723X10⁻²", "2.723X10⁻⁴"],
     answer: 2,
-    explanation: "에너지 $W = \\frac{1}{2}CV^2$ 공식을 이용합니다. 인체 용량 계산 후 식에 대입하면 약 $5.445 \\times 10^{-4}$ J이 나옵니다.",
+    explanation: "에너지 W = \\frac{1}{2}CV^2 공식을 이용합니다. 인체 용량 계산 후 식에 대입하면 약 5.445 \\times 10^{-4} J이 나옵니다.",
     image: null,
   },
   {
@@ -762,7 +762,7 @@ const questions = [
       "5% NaOH 수용액 : 80kg, 10% NaOH 수용액 : 20kg"
     ],
     answer: 4,
-    explanation: "혼합 방정식 $0.05x + 0.1(100-x) = 0.06 \\times 100$을 풀면, $0.05x + 10 - 0.1x = 6$, 즉 $0.05x = 4$가 되어 $x = 80kg$이 나옵니다. 따라서 5% 용액 80kg과 10% 용액 20kg이 정답입니다.",
+    explanation: "혼합 방정식 0.05x + 0.1(100-x) = 0.06 \\times 100을 풀면, 0.05x + 10 - 0.1x = 6, 즉 0.05x = 4가 되어 x = 80kg이 나옵니다. 따라서 5% 용액 80kg과 10% 용액 20kg이 정답입니다.",
     image: null,
   },
   {
@@ -815,7 +815,7 @@ const questions = [
     question: "폭굉현상은 혼합물질에만 한정되는 것이 아니고, 순수물질에 있어서도 그 분해열이 폭굉을 일으키는 경우가 있다. 다음 중 고압하에서 폭굉을 일으키는 순수물질은?",
     options: ["오존", "아세톤", "아세틸렌", "아조메탄"],
     answer: 3,
-    explanation: "아세틸렌($C_2H_2$)은 극히 불안정하여 공기 없이 고압 상태에서 스스로 분해 폭발(폭굉)을 일으킬 수 있는 위험한 물질입니다.",
+    explanation: "아세틸렌(C_2H_2)은 극히 불안정하여 공기 없이 고압 상태에서 스스로 분해 폭발(폭굉)을 일으킬 수 있는 위험한 물질입니다.",
     image: null,
   },
   {
@@ -871,7 +871,7 @@ const questions = [
     question: "다음 중 인화점이 가장 낮은 물질은?",
     options: ["CS₂", "C₂H₅OH", "CH₃COCH₃", "CH₃COOC₂H₅"],
     answer: 1,
-    explanation: "이황화탄소($CS_2$)의 인화점은 약 -30℃로 제시된 물질 중 가장 낮으며 발화점도 매우 낮아 극히 위험한 물질입니다.",
+    explanation: "이황화탄소(CS₂)의 인화점은 약 -30℃로 제시된 물질 중 가장 낮으며 발화점도 매우 낮아 극히 위험한 물질입니다.",
     image: null,
   },
   {
@@ -879,12 +879,12 @@ const questions = [
     question: "Burgess-Wheeler의 법칙에 따르면 탄화수소계 가스에서 폭발하한계의 농도(vol%)와 연소열(kcal/mol)의 곱의 값은 약 얼마 정도인가?",
     options: ["1,100", "2,800", "3,200", "3,800"],
     answer: 1,
-    explanation: "Burgess-Wheeler 법칙에 의하면 [폭발하한계 $\times$ 연소열 $\approx$ 1,100]이라는 일정한 수치가 성립합니다.",
+    explanation: "Burgess-Wheeler 법칙에 의하면 [폭발하한계 \times 연소열 \approx 1,100]이라는 일정한 수치가 성립합니다.",
     image: null,
   },
   {
     id: 97,
-    question: "다음 중 메타인산($HPO_3$)에 의한 소화효과를 가진 분말소화약제의 종류는?",
+    question: "다음 중 메타인산(HPO_3)에 의한 소화효과를 가진 분말소화약제의 종류는?",
     options: ["제1종 분말소화약제", "제2종 분말소화약제", "제3종 분말소화약제", "제4종 분말소화약제"],
     answer: 3,
     explanation: "3종 분말(제1인산암모늄)은 열분해 시 메타인산이 생성되어 가연물 표면에 방진막을 형성(피복 효과), 화재를 차단합니다.",
@@ -895,7 +895,7 @@ const questions = [
     question: "다음 중 인체의 표면적이 0.5m²이고 정전용량은 0.02μF/cm²일 때, 3,300V의 전압에서 축적되는 정전기에너지(J)는?",
     options: ["5.445X10⁻²", "5.445X10⁻⁴", "2.723X10⁻²", "2.723X10⁻⁴"],
     answer: 2,
-    explanation: "에너지 $W = \\frac{1}{2}CV^2$ 공식을 이용합니다. 인체 용량 계산 후 식에 대입하면 약 $5.445 \\times 10^{-4}$ J이 나옵니다.",
+    explanation: "에너지 W = \\frac{1}{2}CV^2 공식을 이용합니다. 인체 용량 계산 후 식에 대입하면 약 5.445 \\times 10^{-4} J이 나옵니다.",
     image: null,
   },
   {
@@ -1082,7 +1082,7 @@ const questions = [
     question: "계단 및 계단참 설치 시 매 제곱미터당 견뎌야 하는 최소 하중은?",
     options: ["300kg", "400kg", "500kg", "600kg"],
     answer: 3,
-    explanation: "계단은 $500kg/m^2$ 이상의 하중을 견딜 수 있는 튼튼한 구조여야 합니다.",
+    explanation: "계단은 500kg/m^2 이상의 하중을 견딜 수 있는 튼튼한 구조여야 합니다.",
     image: null,
   },
   {
