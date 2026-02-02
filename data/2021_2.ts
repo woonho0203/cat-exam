@@ -33,7 +33,7 @@ const questions = [
   },
   {
     id: 5,
-    question: "다음의 교육내용과 관련 있는 교육은?\n(OCR 오류: 지문 내용 공백)",
+    question: "다음의 교육내용과 관련 있는 교육은?\n(• 작업동작 및 표준작업방법의 습관화 • 공구 • 보호구 등의 관리 및 취급태도의 확립 • 작업 전후의 점검, 검사요령의 정확화 및 습관화)",
     options: ["지식교육", "기능교육", "태도교육", "문제해결교육"],
     answer: 3,
     explanation: "안전교육 3단계 중 '태도교육'은 생활지도나 작업 동작 지도를 통해 안전을 습관화하는 단계입니다. 표준 작업 방법의 습관화가 핵심 키워드예요. (참고: 지문 내용이 누락되었으나 해설 자료상 태도교육에 대한 설명입니다.)",
@@ -105,8 +105,12 @@ const questions = [
   },
   {
     id: 14,
-    question: "헤링(Hering)의 착시현상에 해당하는 것은?\n(OCR 오류: 보기 내용 유실)",
-    options: ["Helmholz", "kohler", "muller Lyer", "Herling"],
+    question: "헤링(Hering)의 착시현상에 해당하는 것은?",
+    options: [    
+    { image: "/images/2021-2-14-1.png" },
+    { image: "/images/2021-2-14-2.png" },
+    { image: "/images/2021-2-14-3.png" }, // 이미지가 없는 보기는 null
+    { image: "/images/2021-2-14-4.png" }],
     answer: 4,
     explanation: "헤링(Hering)의 착시는 평행선이 굽어 보이는 현상을 말합니다. 보기 중 4번이 헤링의 착시를 나타냅니다.",
     image: null,
