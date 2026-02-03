@@ -8,7 +8,7 @@ import allQuestions from "../../../data";
 interface Question {
   id: number;
   question: string;
-  options: string[];
+  options: any[];
   answer: number;
   explanation: string;
   image?: string | null;
@@ -32,9 +32,12 @@ export default function ExamPage() {
 
   const questions = useMemo(() => {
     if (!originalQuestions) return [];
-    return originalQuestions.map((q: Question) => ({
+   return originalQuestions.map((q: Question) => ({
       ...q,
-      shuffledOptions: shuffleArray(q.options.map((text: string, i: number) => ({ text, originalNum: i + 1 })))
+      shuffledOptions: shuffleArray(q.options.map((opt: any, i: number) => {
+        if (typeof opt === 'string') return { text: opt, originalNum: i + 1 };
+        return { ...opt, originalNum: i + 1 };
+      }))
     }));
   }, [originalQuestions]);
 
@@ -204,8 +207,9 @@ export default function ExamPage() {
             }
 
             return (
-              <div key={i} onClick={() => handleSelectAnswer(opt.originalNum)} style={{ padding: "16px 20px", borderRadius: "10px", backgroundColor: bgColor, border: `2px solid ${borderColor}`, cursor: "pointer" }}>
-                {i + 1}. {opt.text}
+              <div key={i} onClick={() => handleSelectAnswer(opt.originalNum)} style={{ padding: "16px 20px", borderRadius: "10px", backgroundColor: bgColor, border: `2px solid ${borderColor}`, cursor: "pointer", display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div>{i + 1}. {opt.text}</div>
+                {opt.image && <img src={opt.image} alt="보기 이미지" style={{ maxWidth: "200px", marginTop: "5px", borderRadius: "5px" }} />}
               </div>
             );
           })}
