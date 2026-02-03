@@ -107,10 +107,10 @@ const questions = [
     id: 14,
     question: "헤링(Hering)의 착시현상에 해당하는 것은?",
     options: [    
-    { image: "/images/2021-2-14-1.png" },
-    { image: "/images/2021-2-14-2.png" },
-    { image: "/images/2021-2-14-3.png" }, // 이미지가 없는 보기는 null
-    { image: "/images/2021-2-14-4.png" }],
+    { text: "1번 보기", image: "/images/2021-2-14-1.png" },
+    { text: "2번 보기", image: "/images/2021-2-14-2.png" },
+    { text: "3번 보기", image: "/images/2021-2-14-3.png" }, // 이미지가 없는 보기는 null
+    { text: "4번 보기", image: "/images/2021-2-14-4.png" }],
     answer: 4,
     explanation: "헤링(Hering)의 착시는 평행선이 굽어 보이는 현상을 말합니다. 보기 중 4번이 헤링의 착시를 나타냅니다.",
     image: null,
