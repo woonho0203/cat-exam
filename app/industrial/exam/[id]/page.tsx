@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 // ✅ 데이터 경로
-import allQuestions from "../../../../data"; 
+import allQuestions from "../../../../data/industrial"; 
 
 // 1. 타입 정의
 interface Question {
@@ -61,16 +61,10 @@ export default function ExamPage() {
         const savedMock = localStorage.getItem("cbt-mock-questions");
         const savedId = localStorage.getItem("cbt-id");
 
-        if (savedId === "랜덤 모의고사" && savedMock) {
-          setQuestions(JSON.parse(savedMock));
-          setLoading(false);
-          setIsExamMode(true); 
-          return;
-        }
-
         const subjects: any[][] = [[], [], [], [], [], []];
         Object.entries(allQuestions).forEach(([sessionKey, qList]: [string, any]) => {
           if (!Array.isArray(qList)) return;
+
           qList.forEach((q: any, idx: number) => {
             const sIdx = Math.floor(idx / 20); 
             if (sIdx < 6) {

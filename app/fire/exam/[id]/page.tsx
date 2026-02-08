@@ -62,13 +62,6 @@ export default function ExamPage() {
         const savedMock = localStorage.getItem("fire-mock-questions");
         const savedId = localStorage.getItem("fire-id");
 
-        if (savedId === "랜덤 모의고사" && savedMock) {
-          setQuestions(JSON.parse(savedMock));
-          setLoading(false);
-          setIsExamMode(true);
-          return;
-        }
-
         // 소방설비기사는 4과목 (총 80문제)
         const subjects: any[][] = [[], [], [], []];
         
