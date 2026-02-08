@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
+// ✅ 데이터 경로 (사용자 설정 유지)
 import allQuestions from "../../../../data/industrial";
 
-// 문제 객체 타입 정의
+// 1. 타입 정의
 interface Question {
   id: number;
   question: string;
@@ -15,6 +16,7 @@ interface Question {
   shuffledOptions?: any[];
 }
 
+// 2. 보기 섞기 함수
 const shuffleArray = (array: any[]) => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -30,9 +32,10 @@ export default function ExamPage() {
   const examId = params.id as string;
   const originalQuestions = allQuestions[examId] || [];
 
+  // 3. 문제 초기화 (최초 1회 보기 섞기)
   const questions = useMemo(() => {
     if (!originalQuestions) return [];
-   return originalQuestions.map((q: Question) => ({
+    return originalQuestions.map((q: Question) => ({
       ...q,
       shuffledOptions: shuffleArray(q.options.map((opt: any, i: number) => {
         if (typeof opt === 'string') return { text: opt, originalNum: i + 1 };
@@ -41,6 +44,7 @@ export default function ExamPage() {
     }));
   }, [originalQuestions]);
 
+  // 4. 상태 관리
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [result, setResult] = useState<"correct" | "wrong" | null>(null);
@@ -48,32 +52,36 @@ export default function ExamPage() {
   const [seconds, setSeconds] = useState(0);
 
   const q = questions[index];
-  const currentCorrectNum = useMemo(() => q ? q.shuffledOptions.findIndex((opt: any) => opt.originalNum === q.answer) + 1 : 0, [q]);
+  const currentCorrectNum = useMemo(() => 
+    q ? q.shuffledOptions?.findIndex((opt: any) => opt.originalNum === q.answer)! + 1 : 0
+  , [q]);
 
+  // 5. 타이머 및 답변 배열 초기화
   useEffect(() => {
     if (questions.length > 0) setAnswers(Array(questions.length).fill(0));
     const timer = setInterval(() => setSeconds((prev) => prev + 1), 1000);
     return () => clearInterval(timer);
   }, [questions]);
 
+  // 6. 실시간 통계 및 과목별 점수 계산
   const stats = useMemo(() => {
     if (questions.length === 0) return null;
-    const totalCorrect = answers.filter((ans: number, idx: number) => questions[idx] && ans === questions[idx].answer).length;
-    const totalSolved = answers.filter((a: number) => a !== 0).length;
+    const totalCorrect = answers.filter((ans, idx) => questions[idx] && ans === questions[idx].answer).length;
+    const totalSolved = answers.filter(a => a !== 0).length;
     const currentTotalScore = Math.round((totalCorrect / questions.length) * 100);
     
-    const subjectDetails = [0, 1, 2, 3, 4, 5].map((sIdx: number) => {
+    // 산업안전기사 6과목 (20문제씩)
+    const subjectDetails = [0, 1, 2, 3, 4, 5].map((sIdx) => {
       const subAns = answers.slice(sIdx * 20, (sIdx + 1) * 20);
       const subQue = questions.slice(sIdx * 20, (sIdx + 1) * 20);
-      const corrects = subAns.filter((ans: number, i: number) => subQue[i] && ans === subQue[i].answer).length;
-      return { corrects, score: corrects * 5 };
+      const corrects = subAns.filter((ans, i) => subQue[i] && ans === subQue[i].answer).length;
+      return { corrects, score: corrects * 5 }; // 문제당 5점
     });
     return { subjectDetails, totalCorrect, totalSolved, currentTotalScore };
   }, [answers, questions]);
 
-  // 🔥 수정된 핸들러: 선택 후 다시 누르면 다음으로 이동
+  // 7. 정답 선택 핸들러
   const handleSelectAnswer = (originalNum: number) => {
-    // 학습 모드에서 이미 결과를 보고 있는 상태라면 아무 보기나 눌러도 다음으로
     if (!isExamMode && result) {
       next();
       return;
@@ -84,10 +92,8 @@ export default function ExamPage() {
     setAnswers(newAnswers);
 
     if (isExamMode) {
-      // 실전 모드는 기존처럼 약간의 딜레이 후 자동 이동
       if (index < questions.length - 1) setTimeout(() => next(), 150);
     } else {
-      // 학습 모드는 정답/오답 상태만 세팅 (이후 클릭 시 위 로직에 의해 넘어감)
       setResult(originalNum === q.answer ? "correct" : "wrong");
     }
   };
@@ -95,6 +101,7 @@ export default function ExamPage() {
   const next = () => { if (index < questions.length - 1) { setIndex(index + 1); setResult(null); } };
   const prev = () => { if (index > 0) { setIndex(index - 1); setResult(null); } };
 
+  // 8. 최종 제출 및 오답 저장
   const submit = () => {
     const savedWrongs = JSON.parse(localStorage.getItem("cbt-wrong-list") || "[]");
     const currentWrongs = questions
@@ -107,24 +114,25 @@ export default function ExamPage() {
 
     const filteredSaved = savedWrongs.filter((v: any) => !correctIds.includes(`${v.examId}-${v.id}`));
     const combined = [...currentWrongs, ...filteredSaved];
-    const uniqueWrongs = combined.filter((v: any, i: number, a: any[]) => 
-      a.findIndex((t: any) => t.id === v.id && t.examId === v.examId) === i
+    const uniqueWrongs = combined.filter((v, i, a) => 
+      a.findIndex((t) => t.id === v.id && t.examId === v.examId) === i
     );
 
     localStorage.setItem("cbt-wrong-list", JSON.stringify(uniqueWrongs));
     localStorage.setItem("cbt-answers", JSON.stringify(answers));
     localStorage.setItem("cbt-id", examId);
     localStorage.setItem("cbt-time", `${Math.floor(seconds/60)}:${(seconds%60).toString().padStart(2,'0')}`);
-    router.push("/result");
+    router.push("/industrial/result");
   };
 
+  // 9. 키보드 이벤트
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!q) return;
       if (['1', '2', '3', '4'].includes(e.key)) {
         if (!isExamMode && result) next();
         else {
-          const opt = q.shuffledOptions[Number(e.key) - 1];
+          const opt = q.shuffledOptions?.[Number(e.key) - 1];
           if (opt) handleSelectAnswer(opt.originalNum);
         }
       }
@@ -135,25 +143,38 @@ export default function ExamPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [index, isExamMode, result, q]);
 
-  if (!q || !stats) return <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", display: "flex", justifyContent: "center", alignItems: "center" }}>로딩 중...</div>;
+  if (!q || !stats) return (
+    <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", display: "flex", justifyContent: "center", alignItems: "center" }}>
+      로딩 중입니다...
+    </div>
+  );
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "20px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         
-        {/* 상단바 */}
+        {/* 상단 헤더 */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
-          <span style={{ fontWeight: "bold" }}>{examId}회차</span>
+          <span style={{ fontWeight: "bold", fontSize: "1.1rem" }}>👷 {examId}회차</span>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <span style={{ color: "#FFD54F" }}>⏳ {Math.floor(seconds/60)}:{(seconds%60).toString().padStart(2,'0')}</span>
-            <button onClick={() => {setIsExamMode(!isExamMode); setResult(null);}} style={{ padding: "6px 15px", borderRadius: 20, border: "none", backgroundColor: isExamMode ? "#444" : "#eee", color: isExamMode ? "white" : "black" }}>
+            <span style={{ color: "#FFD54F", fontWeight: "bold" }}>⏱ {Math.floor(seconds/60)}:{(seconds%60).toString().padStart(2,'0')}</span>
+            <button 
+              onClick={() => {setIsExamMode(!isExamMode); setResult(null);}} 
+              style={{ 
+                padding: "6px 15px", borderRadius: 20, border: "none", cursor: "pointer",
+                backgroundColor: isExamMode ? "#444" : "#eee", color: isExamMode ? "white" : "black",
+                fontWeight: "bold", fontSize: "0.8rem"
+              }}>
               {isExamMode ? "실전모드" : "학습모드"}
             </button>
           </div>
         </div>
 
         {/* 종합 현황판 */}
-        <div style={{ backgroundColor: "#1E1E1E", padding: "15px", borderRadius: "15px", border: "1px solid #333", marginBottom: "15px", display: "flex", justifyContent: "space-around", alignItems: "center" }}>
+        <div style={{ 
+          backgroundColor: "#1E1E1E", padding: "15px", borderRadius: "15px", border: "1px solid #333", 
+          marginBottom: "15px", display: "flex", justifyContent: "space-around", alignItems: "center" 
+        }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: "0.7rem", color: "#aaa" }}>진행도</div>
             <div style={{ fontSize: "1.1rem", fontWeight: "bold" }}>{stats.totalSolved} / {questions.length}</div>
@@ -163,38 +184,47 @@ export default function ExamPage() {
             <div style={{ fontSize: "1.1rem", fontWeight: "bold", color: "#4CAF50" }}>{stats.totalCorrect}개</div>
           </div>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "0.7rem", color: "#aaa" }}>예상 점수</div>
+            <div style={{ fontSize: "0.7rem", color: "#aaa" }}>평균 점수</div>
             <div style={{ fontSize: "1.4rem", fontWeight: "bold", color: stats.currentTotalScore >= 60 ? "#4FC3F7" : "#FF5252" }}>{stats.currentTotalScore}점</div>
           </div>
         </div>
 
-        {/* 과목별 타일 */}
+        {/* 과목별 실시간 점수 판 */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "6px", marginBottom: "25px" }}>
-          {stats.subjectDetails.map((item, i) => (
-            <div key={i} style={{ 
-              backgroundColor: "#1E1E1E", padding: "8px 2px", borderRadius: "10px", textAlign: "center",
-              border: `1px solid ${Math.floor(index/20) === i ? "#4FC3F7" : "#333"}`
-            }}>
-              <div style={{ fontSize: "0.6rem", color: "#aaa" }}>{i+1}과목</div>
-              <div style={{ fontSize: "0.8rem", fontWeight: "bold", color: item.score >= 40 ? "#4CAF50" : "#FF5252" }}>{item.corrects}/20</div>
-            </div>
-          ))}
+          {stats.subjectDetails.map((item, i) => {
+            const isCurrentSubject = Math.floor(index / 20) === i;
+            const isFail = item.score < 40;
+            return (
+              <div key={i} style={{ 
+                backgroundColor: "#1E1E1E", padding: "10px 2px", borderRadius: "10px", textAlign: "center",
+                border: `1px solid ${isCurrentSubject ? "#4FC3F7" : "#333"}`,
+                boxShadow: isCurrentSubject ? "0 0 10px rgba(79, 195, 247, 0.2)" : "none"
+              }}>
+                <div style={{ fontSize: "0.6rem", color: "#aaa" }}>{i+1}과목</div>
+                <div style={{ fontSize: "0.8rem", fontWeight: "bold", color: isFail ? "#FF5252" : "#4CAF50" }}>{item.corrects}/20</div>
+                <div style={{ fontSize: "0.65rem", color: isFail ? "#FF8A80" : "#81C784", fontWeight: "bold" }}>{item.score}점</div>
+              </div>
+            );
+          })}
         </div>
 
         {/* 문제 영역 */}
-        <h2 style={{ backgroundColor: "#1E1E1E", padding: "20px", borderRadius: "12px", border: "1px solid #333", marginBottom: 20 }}>
-          <span style={{ color: "#4FC3F7", marginRight: 10 }}>Q{index + 1}.</span>{q.question}
-        </h2>
+        <div style={{ backgroundColor: "#1E1E1E", padding: "25px", borderRadius: "15px", border: "1px solid #333", marginBottom: 20 }}>
+          <h2 style={{ fontSize: "1.2rem", lineHeight: "1.6", margin: 0, wordBreak: "keep-all" }}>
+            <span style={{ color: "#4FC3F7", marginRight: 10, fontWeight: "900" }}>Q{index + 1}.</span>
+            {q.question}
+          </h2>
+        </div>
 
         {q.image && (
-          <div style={{ marginBottom: 20, textAlign: "center", background: "#000", padding: 10, borderRadius: 10, border: "1px solid #333" }}>
-            <img src={q.image} alt="문제 이미지" style={{ maxWidth: "100%", maxHeight: "300px" }} />
+          <div style={{ marginBottom: 20, textAlign: "center", background: "#000", padding: 10, borderRadius: 12, border: "1px solid #333" }}>
+            <img src={q.image} alt="문제 이미지" style={{ maxWidth: "100%", maxHeight: "300px", objectFit: "contain" }} />
           </div>
         )}
 
         {/* 보기 영역 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 30 }}>
-          {q.shuffledOptions.map((opt: any, i: number) => {
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 30 }}>
+          {q.shuffledOptions?.map((opt: any, i: number) => {
             const isSelected = answers[index] === opt.originalNum;
             let bgColor = "#2C2C2C";
             let borderColor = "#333";
@@ -207,29 +237,53 @@ export default function ExamPage() {
             }
 
             return (
-              <div key={i} onClick={() => handleSelectAnswer(opt.originalNum)} style={{ padding: "16px 20px", borderRadius: "10px", backgroundColor: bgColor, border: `2px solid ${borderColor}`, cursor: "pointer", display: "flex", flexDirection: "column", gap: "8px" }}>
-                <div>{i + 1}. {opt.text}</div>
-                {opt.image && <img src={opt.image} alt="보기 이미지" style={{ maxWidth: "200px", marginTop: "5px", borderRadius: "5px" }} />}
+              <div 
+                key={i} 
+                onClick={() => handleSelectAnswer(opt.originalNum)} 
+                style={{ 
+                  padding: "18px 20px", borderRadius: "12px", backgroundColor: bgColor, 
+                  border: `2px solid ${borderColor}`, cursor: "pointer", transition: "all 0.2s" 
+                }}>
+                <div style={{ fontSize: "1.05rem" }}>{i + 1}. {opt.text}</div>
+                {opt.image && <img src={opt.image} alt="보기 이미지" style={{ maxWidth: "200px", marginTop: 10, borderRadius: 5 }} />}
               </div>
             );
           })}
         </div>
 
-        {/* 해설창 */}
+        {/* 해설창 (학습모드) */}
         {!isExamMode && result && (
-          <div style={{ backgroundColor: "#1E1E1E", padding: 25, borderRadius: 15, border: `1px solid ${result === "correct" ? "#4CAF50" : "#FF5252"}`, marginBottom: 30 }}>
+          <div style={{ 
+            backgroundColor: "#1E1E1E", padding: "25px", borderRadius: "15px", 
+            border: `1px solid ${result === "correct" ? "#4CAF50" : "#FF5252"}`, marginBottom: 30 
+          }}>
             <h3 style={{ margin: "0 0 10px 0", color: result === "correct" ? "#81C784" : "#FF5252" }}>
               {result === "correct" ? "✅ 정답입니다!" : `❌ 오답 (정답: ${currentCorrectNum}번)`}
             </h3>
-            <div style={{ lineHeight: "1.6", color: "#ddd" }}><strong>[해설]</strong> {q.explanation}</div>
-            <p style={{ textAlign: "center", color: "#666", marginTop: 15, fontSize: "0.8rem" }}>[Enter]나 보기를 다시 클릭하여 다음으로</p>
+            <div style={{ lineHeight: "1.6", color: "#ddd", fontSize: "0.95rem" }}>
+              <strong>[해설]</strong> {q.explanation}
+            </div>
+            <p style={{ textAlign: "center", color: "#666", marginTop: 15, fontSize: "0.8rem" }}>보기를 한 번 더 클릭하거나 [Enter]를 누르면 다음으로</p>
           </div>
         )}
 
-        {/* 하단 버튼 */}
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", paddingBottom: 60 }}>
-          <button onClick={prev} disabled={index === 0} style={{ padding: "14px 28px", background: "#333", color: "white", borderRadius: 10, border: "none" }}>이전</button>
-          <button onClick={index === questions.length - 1 ? submit : next} style={{ padding: "14px 35px", background: index === questions.length - 1 ? "#4CAF50" : "#2196F3", color: "white", borderRadius: 10, border: "none", fontWeight: "bold" }}>
+        {/* 네비게이션 버튼 */}
+        <div style={{ display: "flex", gap: 15, justifyContent: "center", paddingBottom: 80 }}>
+          <button 
+            onClick={prev} 
+            disabled={index === 0} 
+            style={{ 
+              padding: "14px 30px", background: "#333", color: "white", borderRadius: 12, 
+              border: "none", cursor: index === 0 ? "default" : "pointer", opacity: index === 0 ? 0.5 : 1 
+            }}>
+            이전
+          </button>
+          <button 
+            onClick={index === questions.length - 1 ? submit : next} 
+            style={{ 
+              padding: "14px 45px", background: index === questions.length - 1 ? "#4CAF50" : "#2196F3", 
+              color: "white", borderRadius: 12, border: "none", fontWeight: "bold", cursor: "pointer" 
+            }}>
             {index === questions.length - 1 ? "최종 제출 🏁" : "다음 문제 ➡️"}
           </button>
         </div>

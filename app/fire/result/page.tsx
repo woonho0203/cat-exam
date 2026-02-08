@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-// ✅ 메인 페이지와 동일한 경로로 수정 (Vercel 빌드 에러 해결 핵심)
+// ✅ 데이터 경로 유지
 import allQuestions from "../../../data/fire";
 
 export default function ResultPage() {
@@ -11,7 +11,7 @@ export default function ResultPage() {
   const [fontSize, setFontSize] = useState(1.0);
 
   useEffect(() => {
-    // ✅ 메인 페이지의 submit() 로직에서 사용하는 키값으로 변경 (fire-)
+    // 1. 저장된 기본 정보 가져오기
     const savedAnswers = localStorage.getItem("fire-answers");
     const savedTime = localStorage.getItem("fire-time") || "00:00";
     const savedId = localStorage.getItem("fire-id") || "";
@@ -20,11 +20,20 @@ export default function ResultPage() {
     if (savedFontSize) setFontSize(parseFloat(savedFontSize));
 
     let questions = [];
-    // ✅ 데이터 로드 로직: allQuestions 가 존재하고 savedId 가 있을 때 매칭
-    if (allQuestions && savedId) {
+
+    // 2. 🔥 [핵심 수정] 실전 모의고사 데이터 복구 로직
+    if (savedId === "랜덤 모의고사") {
+      // 모의고사 페이지에서 저장한 임시 문제 리스트를 가져옵니다.
+      const mockData = sessionStorage.getItem("fire-mock-questions");
+      if (mockData) {
+        questions = JSON.parse(mockData);
+      }
+    } else if (allQuestions && savedId) {
+      // 일반 기출문제 회차인 경우
       questions = allQuestions[savedId] || [];
     }
 
+    // 3. 데이터가 정상적으로 로드되었을 때만 세팅
     if (savedAnswers && questions.length > 0) {
       setData({
         id: savedId,
@@ -43,7 +52,7 @@ export default function ResultPage() {
     });
   };
 
-  // ✅ 과목별 분석: 소방설비기사 기준 (4과목, 과목당 20문제)
+  // ✅ 과목별 분석 (소방: 4과목)
   const subjectAnalysis = useMemo(() => {
     if (!data) return [];
     return [0, 1, 2, 3].map(i => {
@@ -58,7 +67,7 @@ export default function ResultPage() {
   const totalScore = useMemo(() => {
     if (subjectAnalysis.length === 0) return 0;
     const sum = subjectAnalysis.reduce((acc, cur) => acc + cur.score, 0);
-    return Math.round(sum / 4); // 4과목 평균
+    return Math.round(sum / 4);
   }, [subjectAnalysis]);
 
   const isPass = useMemo(() => {
@@ -73,16 +82,15 @@ export default function ResultPage() {
 
   if (!data) return (
     <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", display: "flex", justifyContent: "center", alignItems: "center" }}>
-      결과를 분석하는 중...
+      결과를 분석하는 중입니다... (데이터 확인 중)
     </div>
   );
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "40px 20px" }}>
       <div style={{ maxWidth: 800, margin: "0 auto" }}>
-        <h1 style={{ textAlign: "center", marginBottom: 30, fontWeight: "bold", color: "#4FC3F7" }}>시험 결과 보고서</h1>
+        <h1 style={{ textAlign: "center", marginBottom: 30, fontWeight: "bold", color: "#FF5252" }}>🚒 시험 결과 보고서</h1>
         
-        {/* 상단 총점 박스 */}
         <div style={{ 
           textAlign: "center", padding: 40, borderRadius: 20, marginBottom: 30,
           backgroundColor: "#1E1E1E", border: `3px solid ${isPass ? "#4CAF50" : "#FF5252"}`,
@@ -94,11 +102,10 @@ export default function ResultPage() {
             {isPass ? "🎉 최종 합격입니다!" : "😢 불합격입니다."}
           </div>
           <p style={{ marginTop: 20, color: "#aaa" }}>
-            ⏱️ 소요 시간: <strong style={{color: "white"}}>{data.time}</strong> | 회차: {data.id}
+            ⏱️ 소요 시간: <strong style={{color: "white"}}>{data.time}</strong> | 구분: {data.id}
           </p>
         </div>
 
-        {/* 과목별 성적 타일 (4과목 배치) */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: 40 }}>
           {subjectAnalysis.map((s) => (
             <div key={s.subject} style={{ 
@@ -112,16 +119,14 @@ export default function ResultPage() {
           ))}
         </div>
 
-        {/* 오답 리스트 영역 */}
         {wrongQuestions.length > 0 && (
           <div style={{ marginTop: 50 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #333", paddingBottom: 15, marginBottom: 30 }}>
               <h2 style={{ color: "#FFD54F", margin: 0 }}>📝 틀린 문제 다시보기 ({wrongQuestions.length}문항)</h2>
-              
               <div style={{ display: "flex", gap: "8px", alignItems: "center", backgroundColor: "#333", padding: "6px 12px", borderRadius: "20px" }}>
-                <button onClick={() => handleFontSize(-0.1)} style={{ background: "none", border: "none", color: "white", cursor: "pointer", padding: "0 5px", fontWeight: "bold", fontSize: "1rem" }}>A-</button>
-                <span style={{ fontSize: "0.8rem", color: "#4FC3F7", minWidth: "40px", textAlign: "center" }}>{Math.round(fontSize * 100)}%</span>
-                <button onClick={() => handleFontSize(0.1)} style={{ background: "none", border: "none", color: "white", cursor: "pointer", padding: "0 5px", fontWeight: "bold", fontSize: "1rem" }}>A+</button>
+                <button onClick={() => handleFontSize(-0.1)} style={{ background: "none", border: "none", color: "white", cursor: "pointer", fontSize: "1rem" }}>A-</button>
+                <span style={{ fontSize: "0.8rem", color: "#FF5252" }}>{Math.round(fontSize * 100)}%</span>
+                <button onClick={() => handleFontSize(0.1)} style={{ background: "none", border: "none", color: "white", cursor: "pointer", fontSize: "1rem" }}>A+</button>
               </div>
             </div>
             
@@ -131,26 +136,12 @@ export default function ResultPage() {
               if (!isWrong) return null;
 
               return (
-                <div key={index} style={{ 
-                  borderRadius: 15, padding: 25, marginBottom: 25, 
-                  backgroundColor: "#1E1E1E", border: "1px solid #333"
-                }}>
-                  <h4 style={{ margin: "0 0 15px 0", color: "#FF5252", fontSize: `${1.1 * fontSize}rem` }}>
-                    문제 {index + 1}번 (내가 선택한 답: {myAnswer || "미입력"}번)
-                  </h4>
-                  <div style={{ fontWeight: "bold", marginBottom: 20, fontSize: `${1.2 * fontSize}rem`, lineHeight: "1.6", wordBreak: "keep-all" }}>{q.question}</div>
-                  
-                  {q.image && (
-                    <div style={{ marginBottom: 20, border: "1px solid #444", borderRadius: 8, padding: 10, display: "inline-block", background: "#000" }}>
-                      <img src={q.image} alt="문제 이미지" style={{ maxWidth: "100%", maxHeight: "300px" }}/>
-                    </div>
-                  )}
-
-                  <div style={{ marginTop: 20 }}>
-                    <div style={{ fontSize: `${1.1 * fontSize}rem`, fontWeight: "bold", color: "#4CAF50", marginBottom: 10 }}>✅ 정답: {q.answer}번</div>
-                    <div style={{ backgroundColor: "#2C1A1A", padding: 20, borderRadius: 10, fontSize: `${1.0 * fontSize}rem`, lineHeight: "1.6", color: "#FFAB91", border: "1px solid #4D2C2C" }}>
-                      <strong>[해설]</strong> {q.explanation}
-                    </div>
+                <div key={index} style={{ borderRadius: 15, padding: 25, marginBottom: 25, backgroundColor: "#1E1E1E", border: "1px solid #333" }}>
+                  <h4 style={{ margin: "0 0 15px 0", color: "#FF5252", fontSize: `${1.1 * fontSize}rem` }}>문제 {index + 1}번</h4>
+                  <div style={{ fontWeight: "bold", marginBottom: 20, fontSize: `${1.2 * fontSize}rem`, lineHeight: "1.6" }}>{q.question}</div>
+                  <div style={{ borderTop: "1px solid #333", paddingTop: 20 }}>
+                    <div style={{ fontWeight: "bold", color: "#4CAF50", marginBottom: 10 }}>✅ 정답: {q.answer}번</div>
+                    <div style={{ backgroundColor: "#2C1A1A", padding: 20, borderRadius: 10, color: "#FFAB91" }}><strong>[해설]</strong> {q.explanation}</div>
                   </div>
                 </div>
               );
@@ -159,8 +150,8 @@ export default function ResultPage() {
         )}
 
         <div style={{ display: "flex", gap: 15, justifyContent: "center", marginTop: 50, paddingBottom: 80 }}>
-          <button onClick={() => router.push("/")} style={{ flex: 1, maxWidth: "200px", padding: "18px", fontSize: "1.1rem", fontWeight: "bold", borderRadius: "12px", border: "1px solid #444", background: "#333", color: "white", cursor: "pointer" }}>🏠 홈으로</button>
-          <button onClick={() => router.push("/fire/wrong-notes")} style={{ flex: 1, maxWidth: "200px", padding: "18px", fontSize: "1.1rem", fontWeight: "bold", borderRadius: "12px", border: "none", background: "#FF5252", color: "white", cursor: "pointer" }}>📝 오답 노트</button>
+          <button onClick={() => router.push("/")} style={{ flex: 1, maxWidth: "200px", padding: "18px", borderRadius: "12px", border: "1px solid #444", background: "#333", color: "white", cursor: "pointer" }}>🏠 홈으로</button>
+          <button onClick={() => router.push("/fire/wrong-notes")} style={{ flex: 1, maxWidth: "200px", padding: "18px", borderRadius: "12px", border: "none", background: "#FF5252", color: "white", cursor: "pointer" }}>📝 오답 노트</button>
         </div>
       </div>
     </div>
