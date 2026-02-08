@@ -277,7 +277,7 @@ const questions = [
     options: ["{1, 2}", "{1, 3}", "{1, 2, 3}", "{2, 3}"],
     answer: 4,
     explanation: "OCR된 해설을 분석하면: T = A * B, A = 1+2, B = 1+3 등등의 구조에서 불 대수 연산을 통해 최종적으로 {2, 3} 등의 집합이 도출된 것으로 보입니다. 정답은 4번입니다.",
-    image: null,
+    image: "/images/2025-3-35.png",
   },
   {
     id: 36,

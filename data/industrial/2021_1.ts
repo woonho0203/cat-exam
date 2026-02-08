@@ -245,7 +245,7 @@ const questions = [
     options: ["0.5824", "0.6682", "0.7855", "0.8642"],
     answer: 1,
     explanation: "병렬 부분 신뢰도: 1 - (1-0.7) \\times (1-0.7) = 0.91. 직렬 부분 신뢰도: 0.8 \\times 0.8 = 0.64. 최종 신뢰도: 0.91 \\times 0.64 = 0.5824입니다.",
-    image: null,
+    image: "/images/2021-1-31.png",
   },
   {
     id: 32,

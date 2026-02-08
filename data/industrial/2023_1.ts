@@ -285,7 +285,7 @@ const questions = [
     options: ["부정 게이트", "수정기호", "위험지속기호", "배타적 OR 게이트"],
     answer: 3,
     explanation: "입력사상이 발생하여 일정 시간 지속되었을 때 출력이 생기는 것을 나타내는 '위험지속기호'입니다.",
-    image: null,
+    image: "/images/2023-1-31.png",
   },
   {
     id: 32,
