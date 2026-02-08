@@ -46,7 +46,10 @@ export default function ResultPage() {
   const handleFontSize = (delta: number) => {
     setFontSize(prev => {
       const newSize = Math.min(Math.max(prev + delta, 0.8), 1.5);
-      localStorage.setItem("cbt-font-size", newSize.toString());
+      // 클라이언트 환경에서만 실행되도록 보장
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cbt-font-size", newSize.toString());
+      }
       return newSize;
     });
   };
@@ -89,7 +92,8 @@ export default function ResultPage() {
 
   if (!data) return (
     <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "20px" }}>
-      <p style={{ color: "#FF5252" }}>데이터를 불러오지 못했습니다. (회차 ID: {localStorage.getItem("cbt-id")})</p>
+      {/* ✅ 수정: 빌드 에러 방지를 위해 window 객체 존재 확인 후 localStorage 접근 */}
+      <p style={{ color: "#FF5252" }}>데이터를 불러오지 못했습니다. (회차 ID: {typeof window !== "undefined" ? localStorage.getItem("cbt-id") : ""})</p>
       <button onClick={() => router.push("/")} style={{ padding: "10px 20px", background: "#4FC3F7", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>메인으로 돌아가기</button>
     </div>
   );
