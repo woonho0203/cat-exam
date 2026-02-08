@@ -17,7 +17,7 @@ const shuffleArray = (array: any[]) => {
 function MockExamContent() {
   const router = useRouter();
 
-  // 1. 문제 생성 (4과목 80문제 + 회차 정보(origin) 포함)
+  // 1. 문제 생성
   const mockQuestions = useMemo(() => {
     const subjects: any[][] = [[], [], [], []];
     if (!allQuestions) return [];
@@ -26,7 +26,6 @@ function MockExamContent() {
       if (!Array.isArray(qList)) return;
       qList.forEach((q: any, idx: number) => {
         const sIdx = Math.floor(idx / 20);
-        // ✅ q.origin 에 "2023-1" 같은 회차 정보를 심습니다.
         if (sIdx < 4) subjects[sIdx].push({ ...q, origin: sessionKey });
       });
     });
@@ -47,6 +46,9 @@ function MockExamContent() {
   const [result, setResult] = useState<"correct" | "wrong" | null>(null);
   const [seconds, setSeconds] = useState(0);
   const [isExamMode, setIsExamMode] = useState(false);
+  
+  // ✅ [추가] 모바일 글씨 크기 조절 상태
+  const [isSmallFont, setIsSmallFont] = useState(false);
 
   const q = mockQuestions[index];
   const currentCorrectNum = useMemo(() => 
@@ -59,7 +61,6 @@ function MockExamContent() {
     return () => clearInterval(timer);
   }, [mockQuestions]);
 
-  // 2. 통계 계산 (실시간 과목별 점수)
   const stats = useMemo(() => {
     if (mockQuestions.length === 0) return null;
     const totalCorrect = answers.filter((ans, idx) => mockQuestions[idx] && ans === mockQuestions[idx].answer).length;
@@ -104,7 +105,6 @@ function MockExamContent() {
     router.push("/fire/result");
   };
 
-  // 3. 키보드 단축키
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!q) return;
@@ -132,13 +132,28 @@ function MockExamContent() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
           <div>
             <h1 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "bold" }}>🚒 소방 랜덤 모의고사</h1>
-            {/* ✅ [추가] 회차 정보 표시 */}
             <span style={{ fontSize: "0.7rem", color: "#FF5252", backgroundColor: "#333", padding: "2px 6px", borderRadius: "4px" }}>
               {q.origin} 기출
             </span>
           </div>
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-            <span style={{ color: "#FFD54F", fontWeight: "bold" }}>⏳ {Math.floor(seconds/60)}:{(seconds%60).toString().padStart(2,'0')}</span>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            {/* ✅ [추가] 글자 크기 토글 버튼 */}
+            <button 
+              onClick={() => setIsSmallFont(!isSmallFont)} 
+              style={{ 
+                padding: "5px 10px", 
+                borderRadius: 15, 
+                border: "1px solid #555", 
+                backgroundColor: isSmallFont ? "#FFD54F" : "#333", 
+                color: isSmallFont ? "black" : "white", 
+                fontSize: "0.7rem", 
+                fontWeight: "bold", 
+                cursor: "pointer" 
+              }}
+            >
+              {isSmallFont ? "글자 기본" : "글자 작게"}
+            </button>
+
             <button onClick={() => {setIsExamMode(!isExamMode); setResult(null);}} style={{ padding: "5px 12px", borderRadius: 15, border: "none", backgroundColor: isExamMode ? "#444" : "#eee", color: isExamMode ? "white" : "black", fontSize: "0.75rem", fontWeight: "bold", cursor: "pointer" }}>
               {isExamMode ? "실전" : "학습"}
             </button>
@@ -155,9 +170,13 @@ function MockExamContent() {
             <div style={{ fontSize: "0.7rem", color: "#aaa" }}>현재 점수</div>
             <div style={{ fontSize: "1.4rem", fontWeight: "bold", color: stats.currentTotalScore >= 60 ? "#4CAF50" : "#FF5252" }}>{stats.currentTotalScore}점</div>
           </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "0.7rem", color: "#aaa" }}>시간</div>
+            <div style={{ fontSize: "1.1rem", fontWeight: "bold", color: "#FFD54F" }}>{Math.floor(seconds/60)}:{(seconds%60).toString().padStart(2,'0')}</div>
+          </div>
         </div>
 
-        {/* ✅ 과목별 실시간 점수 타일 */}
+        {/* 과목별 실시간 점수 타일 */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "25px" }}>
           {stats.subjectDetails.map((item, i) => {
             const isCurrent = Math.floor(index / 20) === i;
@@ -177,7 +196,11 @@ function MockExamContent() {
 
         {/* 문제 영역 */}
         <div style={{ backgroundColor: "#1E1E1E", padding: "20px", borderRadius: "12px", border: "1px solid #333", marginBottom: 20 }}>
-          <h2 style={{ fontSize: "1.2rem", lineHeight: "1.6", margin: 0 }}>
+          <h2 style={{ 
+            fontSize: isSmallFont ? "1.0rem" : "1.2rem", // ✅ 조건부 폰트 크기
+            lineHeight: "1.6", 
+            margin: 0 
+          }}>
             <span style={{ color: "#FF5252", marginRight: 10, fontWeight: "900" }}>Q{index + 1}.</span>{q.question}
           </h2>
           {q.image && <img src={q.image} alt="문제 이미지" style={{ maxWidth: "100%", maxHeight: "300px", marginTop: 20, borderRadius: 10 }} />}
@@ -194,7 +217,19 @@ function MockExamContent() {
               else if (isSelected) bgColor = "#3E2723";
             }
             return (
-              <div key={i} onClick={() => handleSelectAnswer(opt.originalNum)} style={{ padding: "18px 20px", borderRadius: "12px", backgroundColor: bgColor, border: "1px solid #333", cursor: "pointer" }}>
+              <div 
+                key={i} 
+                onClick={() => handleSelectAnswer(opt.originalNum)} 
+                style={{ 
+                  padding: isSmallFont ? "14px 18px" : "18px 20px", // ✅ 패딩 조절로 높이 감소
+                  fontSize: isSmallFont ? "0.9rem" : "1.0rem",      // ✅ 조건부 폰트 크기
+                  borderRadius: "12px", 
+                  backgroundColor: bgColor, 
+                  border: "1px solid #333", 
+                  cursor: "pointer",
+                  transition: "all 0.2s"
+                }}
+              >
                 {i + 1}. {opt.text}
                 {opt.image && <img src={opt.image} alt="보기 이미지" style={{ maxWidth: "200px", marginTop: 10, borderRadius: 5 }} />}
               </div>
@@ -208,7 +243,9 @@ function MockExamContent() {
             <h3 style={{ margin: "0 0 10px 0", color: result === "correct" ? "#81C784" : "#FF5252" }}>
               {result === "correct" ? "✅ 정답!" : `❌ 오답 (정답: ${currentCorrectNum}번)`}
             </h3>
-            <div style={{ lineHeight: "1.6", color: "#ddd" }}><strong>[해설]</strong> {q.explanation}</div>
+            <div style={{ fontSize: isSmallFont ? "0.85rem" : "1.0rem", lineHeight: "1.6", color: "#ddd" }}>
+              <strong>[해설]</strong> {q.explanation}
+            </div>
             <p style={{ textAlign: "center", color: "#666", marginTop: 15, fontSize: "0.8rem" }}>보기를 다시 클릭하거나 [Enter]를 누르면 다음으로</p>
           </div>
         )}
