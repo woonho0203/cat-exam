@@ -2,51 +2,72 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-// ✅ 데이터 경로를 다시 한 번 확인하세요. (소방은 /data/fire 였지만 산업안전은 /data 인지 확인)
+// ✅ 데이터 경로 확인: app/industrial/result/page.tsx 기준으로 상위 3단계가 data 폴더인지 확인
 import allQuestions from "../../../data";
 
 export default function ResultPage() {
   const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [fontSize, setFontSize] = useState(1.0);
+  const [statusMessage, setStatusMessage] = useState("결과를 분석 중입니다...");
 
   useEffect(() => {
-    // 1. 산업안전용 로컬스토리지 키값 확인
+    // 1. 로컬스토리지 데이터 로드
     const savedAnswers = localStorage.getItem("cbt-answers");
     const savedTime = localStorage.getItem("cbt-time") || "00:00";
-    const savedId = localStorage.getItem("cbt-id") || ""; // 예: "2025-1"
-    
+    const savedId = localStorage.getItem("cbt-id") || ""; 
     const savedFontSize = localStorage.getItem("cbt-font-size");
+
     if (savedFontSize) setFontSize(parseFloat(savedFontSize));
 
-    let questions = [];
-    const questionsRepo = (allQuestions as any).default || allQuestions;
+    if (!savedAnswers) {
+      alert("풀이 기록이 없습니다.");
+      router.push("/industrial"); // 산업안전 메인으로 이동
+      return;
+    }
 
-    // 2. 데이터 매칭 로직 (언더바/하이픈 모두 대응)
+    let questions = [];
+
+    // ✅ [핵심 수정] 랜덤 모의고사일 경우 저장된 문제 데이터를 사용
     if (savedId === "랜덤 모의고사") {
       const mockData = localStorage.getItem("cbt-mock-questions");
-      if (mockData) questions = JSON.parse(mockData);
-    } else if (questionsRepo && savedId) {
-      // ✅ 하이픈(-)을 언더바(_)로 변환하여 '2025_1' 형식으로 매칭 시도
-      const fixedId = savedId.replace("-", "_"); 
-      questions = questionsRepo[fixedId] || questionsRepo[savedId] || [];
+      const sessionMockData = sessionStorage.getItem("cbt-mock-questions");
+
+      if (mockData) {
+        questions = JSON.parse(mockData);
+      } else if (sessionMockData) {
+        questions = JSON.parse(sessionMockData);
+      }
+    } 
+    // ✅ 일반 기출문제일 경우 데이터 파일에서 가져오기
+    else {
+      // data/index.ts 구조에 따라 접근 방식 조정
+      // 보통 import allQuestions from "../../../data" 라면 allQuestions 객체 자체에 키가 있습니다.
+      const questionsRepo = (allQuestions as any).default || allQuestions;
+      
+      const fixedId = savedId.replace("-", "_");
+      // 산업안전 데이터(industrial)가 병합된 상태라면 바로 키로 접근 가능
+      questions = questionsRepo[savedId] || questionsRepo[fixedId] || [];
     }
 
-    // 3. 데이터가 있을 때만 상태 업데이트
-    if (savedAnswers && questions.length > 0) {
-      setData({
-        id: savedId,
-        answers: JSON.parse(savedAnswers),
-        questions: questions,
-        time: savedTime
-      });
+    if (!questions || questions.length === 0) {
+      setStatusMessage(`❌ 문제 데이터를 찾을 수 없습니다. (ID: ${savedId})`);
+      return;
     }
-  }, []);
 
+    // 2. 데이터 업데이트
+    setData({
+      id: savedId,
+      answers: JSON.parse(savedAnswers),
+      questions: questions,
+      time: savedTime
+    });
+  }, [router]);
+
+  // 글자 크기 조절
   const handleFontSize = (delta: number) => {
     setFontSize(prev => {
       const newSize = Math.min(Math.max(prev + delta, 0.8), 1.5);
-      // 클라이언트 환경에서만 실행되도록 보장
       if (typeof window !== "undefined") {
         localStorage.setItem("cbt-font-size", newSize.toString());
       }
@@ -54,7 +75,7 @@ export default function ResultPage() {
     });
   };
 
-  // ✅ 산업안전기사 전용: 6과목 분석 (20문제씩)
+  // 3. 점수 분석 (산업안전기사 6과목)
   const subjectAnalysis = useMemo(() => {
     if (!data) return [];
     const subjectNames = ["안전관리론", "인간공학/시스템", "기계위험방지", "전기위험방지", "화학설비위험", "건설위험방지"];
@@ -63,7 +84,6 @@ export default function ResultPage() {
       const subAns = data.answers.slice(i * 20, (i + 1) * 20);
       const subQue = data.questions.slice(i * 20, (i + 1) * 20);
       
-      // 타입 차이 방지를 위해 String으로 변환 후 비교
       const corrects = subAns.filter((ans: any, idx: number) => 
         subQue[idx] && String(ans) === String(subQue[idx].answer)
       ).length;
@@ -76,12 +96,12 @@ export default function ResultPage() {
   const totalScore = useMemo(() => {
     if (subjectAnalysis.length === 0) return 0;
     const sum = subjectAnalysis.reduce((acc, cur) => acc + cur.score, 0);
-    return Math.round(sum / 6); // 산업안전은 6과목 평균
+    return Math.round(sum / 6); // 6과목 평균
   }, [subjectAnalysis]);
 
   const isPass = useMemo(() => {
     if (subjectAnalysis.length === 0) return false;
-    // 평균 60점 이상 및 모든 과목 40점 이상(과락 없음)
+    // 평균 60점 이상 & 과락 없음
     return totalScore >= 60 && subjectAnalysis.every(s => !s.isFail);
   }, [totalScore, subjectAnalysis]);
 
@@ -92,9 +112,8 @@ export default function ResultPage() {
 
   if (!data) return (
     <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "20px" }}>
-      {/* ✅ 수정: 빌드 에러 방지를 위해 window 객체 존재 확인 후 localStorage 접근 */}
-      <p style={{ color: "#FF5252" }}>데이터를 불러오지 못했습니다. (회차 ID: {typeof window !== "undefined" ? localStorage.getItem("cbt-id") : ""})</p>
-      <button onClick={() => router.push("/")} style={{ padding: "10px 20px", background: "#4FC3F7", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>메인으로 돌아가기</button>
+      <p style={{ color: "#FF5252", fontSize: "1.2rem", fontWeight: "bold" }}>{statusMessage}</p>
+      <button onClick={() => router.push("/industrial")} style={{ padding: "10px 20px", background: "#4FC3F7", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>메인으로 돌아가기</button>
     </div>
   );
 
@@ -122,7 +141,7 @@ export default function ResultPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "12px", marginBottom: 40 }}>
           {subjectAnalysis.map((s) => (
             <div key={s.subject} style={{ padding: "15px", backgroundColor: "#1E1E1E", borderRadius: "12px", textAlign: "center", border: `1px solid ${s.isFail ? "#FF5252" : "#333"}` }}>
-              <div style={{ fontSize: "0.7rem", color: "#aaa", marginBottom: "5px" }}>{s.name}</div>
+              <div style={{ fontSize: "0.7rem", color: "#aaa", marginBottom: "5px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</div>
               <div style={{ fontSize: "1.4rem", fontWeight: "bold", color: s.isFail ? "#FF5252" : "white" }}>{s.score}점</div>
               {s.isFail && <div style={{ fontSize: "0.7rem", color: "#FF5252", marginTop: "3px" }}>과락</div>}
             </div>
@@ -153,7 +172,7 @@ export default function ResultPage() {
         )}
 
         <div style={{ display: "flex", gap: 15, marginTop: 50, paddingBottom: 80 }}>
-          <button onClick={() => router.push("/")} style={{ flex: 1, padding: "18px", borderRadius: "12px", border: "1px solid #444", background: "#333", color: "white", cursor: "pointer", fontWeight: "bold" }}>🏠 홈으로</button>
+          <button onClick={() => router.push("/industrial")} style={{ flex: 1, padding: "18px", borderRadius: "12px", border: "1px solid #444", background: "#333", color: "white", cursor: "pointer", fontWeight: "bold" }}>🏠 홈으로</button>
           <button onClick={() => router.push("/industrial/wrong-notes")} style={{ flex: 1, padding: "18px", borderRadius: "12px", border: "none", background: "#4FC3F7", color: "black", fontWeight: "bold", cursor: "pointer" }}>📝 오답 노트</button>
         </div>
       </div>

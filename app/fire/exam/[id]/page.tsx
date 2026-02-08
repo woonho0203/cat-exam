@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
-// ✅ 데이터 경로: 상위로 4번 나가서 data/fire 폴더의 index.ts를 찾습니다.
+// ✅ 데이터 경로 확인 (상위 폴더 구조에 맞춰 조정)
 import allQuestions from "../../../../data/fire";
 
+// 1. 타입 정의
 interface Question {
   id: number;
   question: string;
@@ -13,8 +14,10 @@ interface Question {
   explanation: string;
   image?: string | null;
   shuffledOptions?: any[];
+  origin?: string; // ✅ 회차 정보 표시용
 }
 
+// 2. 보기 섞기 함수
 const shuffleArray = (array: any[]) => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -24,73 +27,150 @@ const shuffleArray = (array: any[]) => {
   return shuffled;
 };
 
+// 3. 문제 처리 공통 함수
+const processQuestions = (rawQuestions: any[], defaultOrigin?: string) => {
+  return rawQuestions.map((q: any) => ({
+    ...q,
+    origin: q.origin || defaultOrigin, 
+    shuffledOptions: shuffleArray((q.options || []).map((opt: any, i: number) => {
+      if (typeof opt === 'string') return { text: opt, originalNum: i + 1 };
+      return { ...opt, originalNum: i + 1 };
+    }))
+  }));
+};
+
 export default function ExamPage() {
   const router = useRouter();
   const params = useParams();
-  const examId = params.id as string;
-  
-  // 데이터 로드 (없을 경우 빈 배열)
-  const originalQuestions = allQuestions ? allQuestions[examId] : [];
+  const rawId = params.id as string; 
+  const isRandomMode = rawId === "random"; // 'random'이면 모의고사 모드
 
-  // 문제 및 보기 섞기
-  const questions = useMemo(() => {
-    if (!originalQuestions || originalQuestions.length === 0) return [];
-    return originalQuestions.map((q: Question) => ({
-      ...q,
-      shuffledOptions: shuffleArray(q.options.map((opt: any, i: number) => {
-        if (typeof opt === 'string') return { text: opt, originalNum: i + 1 };
-        return { ...opt, originalNum: i + 1 };
-      }))
-    }));
-  }, [originalQuestions]);
-
+  // 상태 관리
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [result, setResult] = useState<"correct" | "wrong" | null>(null);
   const [isExamMode, setIsExamMode] = useState(false);
   const [seconds, setSeconds] = useState(0);
 
-  // 현재 문제 데이터
-  const q = questions[index];
-  const currentCorrectNum = useMemo(() => q ? q.shuffledOptions.findIndex((opt: any) => opt.originalNum === q.answer) + 1 : 0, [q]);
+  // 4. 데이터 로딩 (통합 로직)
+  useEffect(() => {
+    const loadQuestions = () => {
+      // A. 랜덤 실전 모의고사
+      if (isRandomMode) {
+        const savedMock = localStorage.getItem("fire-mock-questions");
+        const savedId = localStorage.getItem("fire-id");
 
-  // 초기화 및 타이머
+        if (savedId === "랜덤 모의고사" && savedMock) {
+          setQuestions(JSON.parse(savedMock));
+          setLoading(false);
+          setIsExamMode(true);
+          return;
+        }
+
+        // 소방설비기사는 4과목 (총 80문제)
+        const subjects: any[][] = [[], [], [], []];
+        
+        Object.entries(allQuestions).forEach(([sessionKey, qList]: [string, any]) => {
+          if (!Array.isArray(qList)) return;
+          qList.forEach((q: any, idx: number) => {
+            const sIdx = Math.floor(idx / 20);
+            if (sIdx < 4) {
+              subjects[sIdx].push({ ...q, origin: sessionKey });
+            }
+          });
+        });
+
+        const getRandom = (pool: any[], count: number) => 
+          [...pool].sort(() => Math.random() - 0.5).slice(0, Math.min(count, pool.length));
+
+        // 과목별 20문제씩 추출
+        const selectedRaw = subjects.flatMap((pool) => getRandom(pool, 20));
+        const finalQuestions = processQuestions(selectedRaw);
+
+        localStorage.setItem("fire-mock-questions", JSON.stringify(finalQuestions));
+        localStorage.setItem("fire-id", "랜덤 모의고사");
+        
+        setQuestions(finalQuestions);
+        setIsExamMode(true);
+      } 
+      // B. 일반 기출문제
+      else {
+        const fixedId = rawId.replace("-", "_");
+        const originalData = (allQuestions as any)[rawId] || (allQuestions as any)[fixedId] || [];
+        
+        if (originalData.length === 0) {
+          alert("해당 회차 데이터를 찾을 수 없습니다.");
+          router.push("/fire"); // 소방 메인으로 이동
+          return;
+        }
+
+        const finalQuestions = processQuestions(originalData, rawId);
+        localStorage.setItem("fire-id", rawId);
+        setQuestions(finalQuestions);
+      }
+      
+      setLoading(false);
+    };
+
+    loadQuestions();
+  }, [rawId, isRandomMode, router]);
+
+  // 5. 초기화 및 타이머
   useEffect(() => {
     if (questions.length > 0) setAnswers(Array(questions.length).fill(0));
-    const timer = setInterval(() => setSeconds((prev) => prev + 1), 1000);
-    return () => clearInterval(timer);
   }, [questions]);
 
-  // 통계 계산 (80문제 기준, 4과목 자동 계산)
+  useEffect(() => {
+    if (loading) return;
+    const timer = setInterval(() => setSeconds((prev) => prev + 1), 1000);
+    return () => clearInterval(timer);
+  }, [loading]);
+
+  const q = questions[index];
+
+  // ✅ 폰트 크기 자동 조절
+  const autoFontSize = useMemo(() => {
+    if (!q) return "1.1rem";
+    const len = q.question.length;
+    if (len > 100) return "clamp(0.9rem, 4vw, 1rem)";
+    if (len > 60) return "clamp(0.95rem, 4.5vw, 1.1rem)";
+    return "clamp(1.1rem, 5vw, 1.25rem)";
+  }, [q]);
+
+  const currentCorrectNum = useMemo(() => 
+    q ? q.shuffledOptions?.findIndex((opt: any) => opt.originalNum === q.answer)! + 1 : 0
+  , [q]);
+
+  // 6. 통계 계산 (소방 4과목)
   const stats = useMemo(() => {
     if (questions.length === 0) return null;
-    const totalCorrect = answers.filter((ans: number, idx: number) => questions[idx] && ans === questions[idx].answer).length;
-    const totalSolved = answers.filter((a: number) => a !== 0).length;
+    const totalCorrect = answers.filter((ans, idx) => questions[idx] && ans === questions[idx].answer).length;
+    const totalSolved = answers.filter(a => a !== 0).length;
     const currentTotalScore = Math.round((totalCorrect / questions.length) * 100);
+    const progressPercent = Math.round((totalSolved / questions.length) * 100);
     
-    // 20문제씩 끊어서 과목별 점수 계산 (소방 4과목 = 80문제)
-    const subjectCount = Math.ceil(questions.length / 20); 
-    const subjectDetails = Array.from({ length: subjectCount }, (_, i) => i).map((sIdx: number) => {
+    // 소방은 4과목 (0, 1, 2, 3)
+    const subjectDetails = [0, 1, 2, 3].map((sIdx) => {
       const subAns = answers.slice(sIdx * 20, (sIdx + 1) * 20);
       const subQue = questions.slice(sIdx * 20, (sIdx + 1) * 20);
-      
-      // 해당 과목에서 푼 문제 수
-      const solvedCount = subAns.filter(a => a !== 0).length;
-      // 해당 과목 정답 수
-      const corrects = subAns.filter((ans: number, i: number) => subQue[i] && ans === subQue[i].answer).length;
-      
-      return { corrects, solvedCount, score: corrects * 5 };
+      const corrects = subAns.filter((ans, i) => subQue[i] && ans === subQue[i].answer).length;
+      return { corrects, score: corrects * 5 };
     });
-    
-    return { subjectDetails, totalCorrect, totalSolved, currentTotalScore };
+    return { subjectDetails, totalCorrect, totalSolved, currentTotalScore, progressPercent };
   }, [answers, questions]);
 
-  // 정답 선택 핸들러
+  // 7. 조작 핸들러
+  const next = () => { if (index < questions.length - 1) { setIndex(index + 1); setResult(null); } };
+  const prev = () => { if (index > 0) { setIndex(index - 1); setResult(null); } };
+
   const handleSelectAnswer = (originalNum: number) => {
     if (!isExamMode && result) { next(); return; }
     const newAnswers = [...answers];
     newAnswers[index] = originalNum;
     setAnswers(newAnswers);
+
     if (isExamMode) {
       if (index < questions.length - 1) setTimeout(() => next(), 150);
     } else {
@@ -98,32 +178,26 @@ export default function ExamPage() {
     }
   };
 
-  const next = () => { if (index < questions.length - 1) { setIndex(index + 1); setResult(null); } };
-  const prev = () => { if (index > 0) { setIndex(index - 1); setResult(null); } };
-
-  // 최종 제출 로직
   const submit = () => {
     const savedWrongs = JSON.parse(localStorage.getItem("fire-wrong-list") || "[]");
     const currentWrongs = questions
       .filter((que: any, i: number) => answers[i] !== 0 && answers[i] !== que.answer)
-      .map((que: any) => ({ ...que, examId, addedAt: new Date().getTime() }));
+      .map((que: any) => ({ ...que, examId: que.origin || rawId, addedAt: new Date().getTime() }));
 
     const correctIds = questions
       .filter((que: any, i: number) => answers[i] === que.answer)
-      .map((que: any) => `${examId}-${que.id}`);
+      .map((que: any) => `${que.origin || rawId}-${que.id}`);
 
     const filteredSaved = savedWrongs.filter((v: any) => !correctIds.includes(`${v.examId}-${v.id}`));
-    const combined = [...currentWrongs, ...filteredSaved];
-    const uniqueWrongs = combined.filter((v: any, i: number, a: any[]) => 
-      a.findIndex((t: any) => t.id === v.id && t.examId === v.examId) === i
+    const uniqueWrongs = [...currentWrongs, ...filteredSaved].filter((v: any, i: number, a: any[]) => 
+      a.findIndex((t) => t.id === v.id && t.examId === v.examId) === i
     );
 
     localStorage.setItem("fire-wrong-list", JSON.stringify(uniqueWrongs));
     localStorage.setItem("fire-answers", JSON.stringify(answers));
-    localStorage.setItem("fire-id", examId);
     localStorage.setItem("fire-time", `${Math.floor(seconds/60)}:${(seconds%60).toString().padStart(2,'0')}`);
     
-    router.push("/fire/result"); 
+    router.push("/fire/result");
   };
 
   // 키보드 이벤트
@@ -133,7 +207,7 @@ export default function ExamPage() {
       if (['1', '2', '3', '4'].includes(e.key)) {
         if (!isExamMode && result) next();
         else {
-          const opt = q.shuffledOptions[Number(e.key) - 1];
+          const opt = q.shuffledOptions?.[Number(e.key) - 1];
           if (opt) handleSelectAnswer(opt.originalNum);
         }
       }
@@ -144,234 +218,166 @@ export default function ExamPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [index, isExamMode, result, q]);
 
-  if (!q) return <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", display: "flex", justifyContent: "center", alignItems: "center" }}>데이터를 불러오는 중입니다... (ID: {examId})</div>;
+  if (loading || !q || !stats) return (
+    <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", display: "flex", justifyContent: "center", alignItems: "center" }}>
+      문제를 불러오는 중입니다...
+    </div>
+  );
 
   return (
-    <div className="exam-page-container" style={{ minHeight: "100vh", backgroundColor: "#121212", color: "#e0e0e0", fontFamily: "sans-serif" }}>
-      <div className="main-wrapper" style={{ maxWidth: "800px", margin: "0 auto", padding: "20px" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "clamp(10px, 4vw, 20px)" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
         
-        {/* 1. 상단 헤더 & 모드 전환 */}
-        <div className="header-flex" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+        {/* 상단 헤더 */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
           <div>
-             <span className="sub-title" style={{ display: "block", fontSize: "0.8rem", color: "#888", marginBottom: "4px" }}>소방설비기사 (전기)</span>
-             <h1 className="main-title" style={{ margin: 0, fontSize: "1.2rem", fontWeight: "bold", color: "#fff" }}>
-               🚒 {examId}회차 기출
-             </h1>
+            {isRandomMode && <span style={{ display: "block", fontSize: "0.75rem", color: "#888", marginBottom: "2px" }}>소방설비기사 (전기)</span>}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <h1 style={{ margin: 0, fontSize: "clamp(1rem, 4vw, 1.2rem)", fontWeight: "bold", color: isRandomMode ? "#fff" : "#FF5252" }}>
+                {isRandomMode ? "🚒 랜덤 모의고사" : `📝 ${rawId}회차`}
+              </h1>
+              {isRandomMode && q.origin && (
+                <span style={{ fontSize: "0.6rem", color: "#FF5252", backgroundColor: "#333", padding: "2px 6px", borderRadius: "4px", fontWeight: "bold", whiteSpace: "nowrap" }}>
+                  {q.origin} 기출
+                </span>
+              )}
+            </div>
           </div>
-
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "5px" }}>
-             <div className="timer-text" style={{ fontSize: "1rem", color: "#FFD54F", fontWeight: "bold", fontFamily: "monospace" }}>
-                ⏱ {Math.floor(seconds/60)}:{(seconds%60).toString().padStart(2,'0')}
-             </div>
-             <button 
-              className="mode-toggle-btn"
+          
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <span style={{ color: "#FFD54F", fontWeight: "bold", fontSize: "0.85rem" }}>⏳ {Math.floor(seconds/60)}:{(seconds%60).toString().padStart(2,'0')}</span>
+            <button 
               onClick={() => {setIsExamMode(!isExamMode); setResult(null);}} 
               style={{ 
-                padding: "6px 12px", borderRadius: "20px", border: "none", 
-                backgroundColor: isExamMode ? "#FF5252" : "#444", 
-                color: "white", fontSize: "0.8rem", cursor: "pointer", transition: "all 0.3s"
+                padding: "6px 12px", borderRadius: 15, border: "none", cursor: "pointer",
+                backgroundColor: isExamMode ? "#444" : "#eee", color: isExamMode ? "white" : "black",
+                fontWeight: "bold", fontSize: "0.75rem"
               }}>
-              {isExamMode ? "🔥 실전 모드 ON" : "📚 학습 모드"}
+              {isExamMode ? "실전모드" : "학습모드"}
             </button>
           </div>
         </div>
 
-        {/* 2. 종합 현황판 */}
-        <div className="stats-container" style={{ 
-          display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", 
-          backgroundColor: "#1E1E1E", padding: "15px", borderRadius: "15px", marginBottom: "15px",
-          boxShadow: "0 4px 6px rgba(0,0,0,0.3)"
-        }}>
-          <div style={{ textAlign: "center", borderRight: "1px solid #333" }}>
-            <div className="stat-label" style={{ fontSize: "0.7rem", color: "#aaa", marginBottom: "5px" }}>진행률</div>
-            <div className="stat-value" style={{ fontSize: "1.1rem", fontWeight: "bold" }}>
-              {Math.round((stats?.totalSolved || 0) / questions.length * 100)}%
-              <span className="stat-small-text" style={{ fontSize: "0.7rem", color: "#666", marginLeft: "5px" }}>({stats?.totalSolved}/{questions.length})</span>
-            </div>
-          </div>
-          <div style={{ textAlign: "center", borderRight: "1px solid #333" }}>
-            <div className="stat-label" style={{ fontSize: "0.7rem", color: "#aaa", marginBottom: "5px" }}>맞은 개수</div>
-            <div className="stat-value" style={{ fontSize: "1.1rem", fontWeight: "bold", color: "#69F0AE" }}>
-               {stats?.totalCorrect} <span style={{ fontSize: "0.8rem" }}>개</span>
-            </div>
+        {/* 종합 현황판 */}
+        <div style={{ backgroundColor: "#1E1E1E", padding: "12px", borderRadius: "15px", border: "1px solid #333", marginBottom: "15px", display: "flex", justifyContent: "space-around" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "0.6rem", color: "#aaa" }}>진행도</div>
+            <div className="stat-val" style={{ fontSize: "0.95rem", fontWeight: "bold" }}>
+              {stats.totalSolved} / {questions.length} 
+              {/* 👇 옆에 회색 글씨로 (NN%)가 나오도록 추가했습니다 */}
+              <span style={{ fontSize: "0.8rem", color: "#aaa", marginLeft: "5px" }}>
+              ({stats.progressPercent}%)
+             </span>
+           </div>
           </div>
           <div style={{ textAlign: "center" }}>
-            <div className="stat-label" style={{ fontSize: "0.7rem", color: "#aaa", marginBottom: "5px" }}>예상 점수</div>
-            <div className="stat-value" style={{ fontSize: "1.1rem", fontWeight: "bold", color: (stats?.currentTotalScore || 0) >= 60 ? "#69F0AE" : "#FF5252" }}>
-              {stats?.currentTotalScore} <span style={{ fontSize: "0.8rem" }}>점</span>
-            </div>
+            <div style={{ fontSize: "0.6rem", color: "#aaa" }}>평균 점수</div>
+            <div style={{ fontSize: "1.2rem", fontWeight: "bold", color: stats.currentTotalScore >= 60 ? "#4CAF50" : "#FF5252" }}>{stats.currentTotalScore}점</div>
           </div>
         </div>
 
-        {/* 3. 과목별 타일 */}
-        <div className="subject-grid" style={{ 
-          display: "grid", 
-          gridTemplateColumns: "repeat(4, 1fr)", 
-          gap: "8px", marginBottom: "30px" 
-        }}>
-          {stats?.subjectDetails.map((item, i) => {
-             const isCurrentSubject = Math.floor(index/20) === i;
-             const isPass = item.score >= 40;
-             
-             return (
-              <div key={i} className={`subject-item ${isCurrentSubject ? 'active' : ''}`} style={{ 
-                backgroundColor: isCurrentSubject ? "#2c2c2c" : "#1E1E1E", 
-                padding: "10px 5px", borderRadius: "8px", textAlign: "center",
-                border: isCurrentSubject ? "1px solid #FF5252" : "1px solid transparent",
-                opacity: item.solvedCount > 0 ? 1 : 0.5,
-                transition: "all 0.3s"
-              }}>
-                <div className="subject-label" style={{ fontSize: "0.7rem", color: "#aaa", marginBottom: "2px" }}>
-                  {i+1}과목
-                </div>
-                <div className="subject-score" style={{ fontWeight: "bold", color: isPass ? "#69F0AE" : "#FF5252", fontSize: "0.9rem" }}>
-                  {item.corrects}/20
-                </div>
+        {/* 과목별 점수 타일 (4과목) */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "20px" }}>
+          {stats.subjectDetails.map((item, i) => (
+            <div key={i} style={{ 
+              backgroundColor: "#1E1E1E", padding: "8px 2px", borderRadius: "8px", textAlign: "center",
+              border: `1px solid ${Math.floor(index/20) === i ? "#FF5252" : "#333"}`
+            }}>
+              <div style={{ fontSize: "0.5rem", color: "#aaa" }}>{i+1}과목</div>
+              <div style={{ fontSize: "0.7rem", fontWeight: "bold", color: item.score >= 40 ? "#4CAF50" : "#FF5252" }}>{item.corrects}/20</div>
+              <div style={{ fontSize: "0.6rem", color: item.score >= 40 ? "#4CAF50" : "#FF5252", fontWeight: "bold" }}>{item.score}점</div>
+            </div>
+          ))}
+        </div>
+
+        {/* 문제 영역 */}
+        <div style={{ backgroundColor: "#1E1E1E", padding: "clamp(15px, 5vw, 25px)", borderRadius: "12px", border: "1px solid #333", marginBottom: 15 }}>
+          <h2 style={{ fontSize: autoFontSize, lineHeight: "1.5", margin: 0, fontWeight: "500", wordBreak: "keep-all" }}>
+            <span style={{ color: "#FF5252", marginRight: 10, fontWeight: "900" }}>Q{index + 1}.</span>
+            {q.question}
+          </h2>
+          {q.image && <img src={q.image} alt="문제 이미지" style={{ maxWidth: "100%", maxHeight: "250px", marginTop: 15, borderRadius: 10, display: "block" }} />}
+        </div>
+
+        {/* 보기 영역 */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 25 }}>
+          {q.shuffledOptions?.map((opt: any, i: number) => {
+            const isSelected = answers[index] === opt.originalNum;
+            let bgColor = "#2C2C2C";
+            let borderColor = "#333";
+
+            if (!isExamMode && result) {
+              if (opt.originalNum === q.answer) { bgColor = "#1B5E20"; borderColor = "#4CAF50"; } 
+              else if (isSelected) { bgColor = "#3E2723"; borderColor = "#FF5252"; }
+            } else if (isSelected) {
+              bgColor = "#D84315"; borderColor = "#FF5252";
+            }
+
+            return (
+              <div 
+                key={i} 
+                onClick={() => handleSelectAnswer(opt.originalNum)} 
+                style={{ 
+                  padding: "clamp(12px, 4vw, 18px) clamp(15px, 5vw, 20px)", borderRadius: "10px", 
+                  backgroundColor: bgColor, border: `2px solid ${borderColor}`, cursor: "pointer",
+                  fontSize: "clamp(0.85rem, 4vw, 1rem)", lineHeight: "1.4", transition: "all 0.1s"
+                }}>
+                <span style={{ fontWeight: "bold", marginRight: "8px" }}>{i + 1}.</span> {opt.text}
+                {opt.image && <img src={opt.image} alt="보기 이미지" style={{ maxWidth: "200px", marginTop: 10, borderRadius: 5, display: "block" }} />}
               </div>
             );
           })}
         </div>
 
-        {/* 4. 문제 영역 */}
-        <div className="question-area" style={{ marginBottom: "20px" }}>
-          <div className="question-container" style={{ 
-            backgroundColor: "#1E1E1E", padding: "20px", borderRadius: "12px", 
-            borderLeft: "5px solid #FF5252", boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
-          }}>
-            <h2 className="question-text" style={{ fontSize: "1.1rem", lineHeight: "1.6", margin: 0 }}>
-              <span style={{ color: "#FF5252", marginRight: "8px", fontWeight: "900" }}>Q{index + 1}.</span>
-              {q.question}
-            </h2>
-          </div>
-        </div>
-
-        {q.image && (
-          <div className="question-image" style={{ marginBottom: 20, textAlign: "center", background: "#000", padding: "10px", borderRadius: "10px", border: "1px solid #333" }}>
-            <img src={q.image} alt="문제 이미지" style={{ maxWidth: "100%", maxHeight: "300px", objectFit: "contain" }} />
-          </div>
-        )}
-
-        {/* 5. 보기 버튼 영역 */}
-        <div className="options-area" style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "30px" }}>
-          {q.shuffledOptions?.map((opt: any, i: number) => {
-            const isSelected = answers[index] === opt.originalNum;
-            let bgColor = "#2C2C2C";
-            let borderColor = "transparent";
-            let textColor = "#e0e0e0";
-
-            if (!isExamMode && result) {
-              if (opt.originalNum === q.answer) { 
-                bgColor = "rgba(27, 94, 32, 0.4)"; borderColor = "#4CAF50"; textColor = "#81C784";
-              } else if (isSelected) { 
-                bgColor = "rgba(183, 28, 28, 0.4)"; borderColor = "#FF5252"; 
-              }
-            } else if (isSelected) {
-              bgColor = "#D32F2F"; borderColor = "#FF5252"; textColor = "#fff";
-            }
-
-            return (
-              <button 
-                key={i} 
-                className="option-button"
-                onClick={() => handleSelectAnswer(opt.originalNum)} 
-                style={{ 
-                  padding: "16px 20px", borderRadius: "12px", 
-                  backgroundColor: bgColor, border: `2px solid ${borderColor}`, 
-                  color: textColor, textAlign: "left", fontSize: "1rem", cursor: "pointer",
-                  transition: "all 0.2s ease", display: "flex", flexDirection: "column"
-                }}
-              >
-                <span className="option-text"><span style={{ fontWeight: "bold", marginRight: "8px" }}>{i + 1}.</span> {opt.text}</span>
-                {opt.image && <img src={opt.image} alt="보기 이미지" style={{ maxWidth: "100%", marginTop: "10px", borderRadius: "5px" }} />}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* 6. 해설창 */}
+        {/* 해설창 */}
         {!isExamMode && result && (
-          <div className="explanation-area" style={{ 
-            backgroundColor: "#263238", padding: "20px", borderRadius: "12px", 
-            border: `1px solid ${result === "correct" ? "#4CAF50" : "#FF5252"}`, marginBottom: "30px",
-            animation: "fadeIn 0.3s ease-in-out"
-          }}>
-            <h3 className="explanation-title" style={{ margin: "0 0 10px 0", color: result === "correct" ? "#81C784" : "#FF5252", display: "flex", alignItems: "center", gap: "5px" }}>
-              {result === "correct" ? "✅ 정답입니다!" : "❌ 오답입니다"}
-              {result !== "correct" && <span className="correct-answer-hint" style={{ fontSize: "0.9rem", color: "#fff", marginLeft: "auto" }}>정답: {currentCorrectNum}번</span>}
+          <div style={{ backgroundColor: "#1E1E1E", padding: 20, borderRadius: 15, border: `1px solid ${result === "correct" ? "#4CAF50" : "#FF5252"}`, marginBottom: 30 }}>
+            <h3 style={{ fontSize: "1rem", margin: "0 0 10px 0", color: result === "correct" ? "#81C784" : "#FF5252" }}>
+              {result === "correct" ? "✅ 정답입니다!" : `❌ 오답 (정답: ${currentCorrectNum}번)`}
             </h3>
-            <div className="explanation-text" style={{ lineHeight: "1.6", color: "#eceff1", fontSize: "0.95rem" }}>
-              <strong>[해설]</strong><br/>
-              {q.explanation}
-            </div>
+            <div style={{ lineHeight: "1.5", color: "#ddd", fontSize: "0.9rem" }}><strong>[해설]</strong> {q.explanation}</div>
+            <p style={{ textAlign: "center", color: "#666", marginTop: 15, fontSize: "0.7rem" }}>보기를 다시 클릭하거나 [Enter]를 누르면 다음으로</p>
           </div>
         )}
 
-        {/* 7. 하단 네비게이션 */}
-        <div className="nav-area" style={{ display: "flex", gap: "15px", justifyContent: "center", paddingBottom: "80px" }}>
-          <button className="nav-btn prev" onClick={prev} disabled={index === 0} style={{ 
-            padding: "14px 24px", background: "#333", color: "white", borderRadius: "12px", 
-            border: "none", cursor: index === 0 ? "not-allowed" : "pointer", fontWeight: "bold", opacity: index === 0 ? 0.5 : 1
-          }}>
-            ⬅️ 이전
+        {/* 네비게이션 버튼 */}
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", paddingBottom: 60 }}>
+          <button 
+            onClick={prev} 
+            disabled={index === 0} 
+            style={{ flex: 1, padding: "14px 0", background: "#333", color: "white", borderRadius: 10, border: "none", cursor: index === 0 ? "default" : "pointer", fontSize: "0.9rem", opacity: index === 0 ? 0.5 : 1 }}>
+            이전
           </button>
-          
-          <button className="nav-btn next" onClick={index === questions.length - 1 ? submit : next} style={{ 
-            padding: "14px 40px", 
-            background: index === questions.length - 1 ? "linear-gradient(45deg, #4CAF50, #81C784)" : "linear-gradient(45deg, #FF5252, #FF8A80)", 
-            color: "white", borderRadius: "12px", border: "none", fontWeight: "bold", cursor: "pointer",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
-          }}>
-            {index === questions.length - 1 ? "결과 제출 🏁" : "다음 문제 ➡️"}
+          <button 
+            onClick={index === questions.length - 1 ? submit : next} 
+            style={{ flex: 2, padding: "14px 0", background: index === questions.length - 1 ? "#4CAF50" : "#FF5252", color: "white", borderRadius: 10, border: "none", fontWeight: "bold", cursor: "pointer", fontSize: "0.9rem" }}>
+            {index === questions.length - 1 ? "최종 제출 🏁" : "다음 문제 ➡️"}
           </button>
         </div>
-
-        {/* 📌 모바일 글씨 최적화 스타일 추가 */}
-        <style jsx global>{`
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-
-          /* 모바일 전용 (600px 이하) 글씨 크기 축소 */
-          @media screen and (max-width: 600px) {
-            .main-wrapper { padding: 12px !important; }
-            .main-title { font-size: 1rem !important; }
-            .sub-title { font-size: 0.7rem !important; }
-            .timer-text { font-size: 0.85rem !important; }
-            .mode-toggle-btn { padding: 4px 10px !important; font-size: 0.75rem !important; }
-
-            /* 현황판 */
-            .stats-container { padding: 10px !important; gap: 5px !important; }
-            .stat-label { font-size: 0.6rem !important; }
-            .stat-value { font-size: 0.85rem !important; }
-            .stat-small-text { font-size: 0.6rem !important; }
-
-            /* 과목 타일 */
-            .subject-grid { margin-bottom: 20px !important; gap: 4px !important; }
-            .subject-item { padding: 6px 2px !important; }
-            .subject-label { font-size: 0.55rem !important; }
-            .subject-score { font-size: 0.75rem !important; }
-
-            /* 문제 영역 */
-            .question-container { padding: 15px !important; }
-            .question-text { font-size: 0.95rem !important; }
-
-            /* 보기 영역 */
-            .options-area { gap: 8px !important; }
-            .option-button { padding: 12px 16px !important; font-size: 0.85rem !important; }
-            
-            /* 해설창 */
-            .explanation-area { padding: 15px !important; }
-            .explanation-title { font-size: 0.9rem !important; }
-            .explanation-text { font-size: 0.8rem !important; }
-            .correct-answer-hint { font-size: 0.75rem !important; }
-
-            /* 하단 네비 */
-            .nav-area { gap: 10px !important; }
-            .nav-btn { padding: 12px 18px !important; font-size: 0.85rem !important; }
-            .nav-btn.next { padding: 12px 30px !important; }
-          }
-        `}</style>
+        {/* ✅ [추가됨] 시험 중단 및 바로 결과 보기 버튼 */}
+        <div style={{ textAlign: "center", paddingBottom: 60 }}>
+          <button 
+            onClick={() => {
+              if (confirm("현재까지 푼 내용으로 시험을 종료하고 결과를 보시겠습니까?")) {
+                submit();
+              }
+            }}
+            style={{ 
+              padding: "12px 20px", 
+              backgroundColor: "transparent", 
+              border: "1px solid #555", 
+              color: "#aaa", 
+              borderRadius: "8px", 
+              fontSize: "0.8rem", 
+              cursor: "pointer",
+              transition: "all 0.2s"
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.borderColor = "#FF5252"; e.currentTarget.style.color = "#FF5252"; }}
+            onMouseOut={(e) => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#aaa"; }}
+          >
+            ⏹️ 시험 종료 및 결과 보기
+          </button>
+        </div>
       </div>
     </div>
   );

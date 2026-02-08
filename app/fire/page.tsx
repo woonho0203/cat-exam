@@ -54,7 +54,7 @@ export default function FireFightingHome() {
       }}>
         {[
           // ✅ 경로 수정: /fire-fighting -> /fire
-          { label: "🎯 실전 모의고사 (랜덤)", color: "#FF5252", shadow: "rgba(255, 82, 82, 0.3)", href: "/fire/mock-exam" },
+          { label: "🎯 실전 모의고사 (랜덤)", color: "#FF5252", shadow: "rgba(255, 82, 82, 0.3)", href: "/fire/exam/random" },
           { label: "📝 오답노트", color: "#607D8B", shadow: "rgba(96, 125, 139, 0.3)", href: "/fire/wrong-notes" }
         ].map((btn, idx) => (
           <Link key={idx} href={btn.href} style={{ flex: "1 1 140px" }}>

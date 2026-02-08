@@ -50,7 +50,7 @@ export default function Home() {
       }}>
         {[
           // ✅ 경로 수정: /mock-exam -> /industrial/mock-exam
-          { label: "🎯 실전 모의고사 (랜덤)", color: "#4CAF50", shadow: "rgba(76, 175, 80, 0.3)", href: "/industrial/mock-exam" },
+          { label: "🎯 실전 모의고사 (랜덤)", color: "#4CAF50", shadow: "rgba(76, 175, 80, 0.3)", href: "/industrial//exam/random" },
           // ✅ 경로 수정: /wrong-notes -> /industrial/wrong-notes
           { label: "📝 오답노트", color: "#FF5252", shadow: "rgba(255, 82, 82, 0.3)", href: "/industrial/wrong-notes" }
         ].map((btn, idx) => (
