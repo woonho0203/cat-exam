@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import allQuestions from "../../data";
+import allQuestions from "../../../data";
 
 // 보기 섞기용 함수
 const shuffleArray = (array: any[]) => {

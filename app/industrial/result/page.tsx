@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import allQuestions from "../../data";
+import allQuestions from "../../../data";
 
 export default function ResultPage() {
   const router = useRouter();
