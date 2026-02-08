@@ -190,7 +190,11 @@ const questions = [
   {
     id: 22,
     question: "다음 중 FT도에서 사용하는 논리기호에 있어 주어진 시스템의 기본사상을 나타낸 것은?",
-    options: ["결함사상", "이하 생략", "기본사상", "전이기호"],
+    options: [
+    { text: "보기", image: "/images/2023-3-22-1.png" },
+    { text: "보기", image: "/images/2023-3-22-2.png" },
+    { text: "보기", image: "/images/2023-3-22-3.png" }, // 이미지가 없는 보기는 null
+    { text: "보기", image: "/images/2023-3-22-4.png" }],
     answer: 3,
     explanation: "기호 중 원형 기호는 기본사상을 나타낸다.",
     image: null,
