@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter } from "next/navigation";
-// ✅ 데이터 경로 수정: 상위 폴더로 이동하여 소방 데이터 불러오기
+// ✅ 데이터 경로 (프로젝트 구조에 맞게 확인)
 import allQuestions from "../../../data/fire";
 
-// 보기 섞기용 함수
 const shuffleArray = (array: any[]) => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -15,39 +14,33 @@ const shuffleArray = (array: any[]) => {
   return shuffled;
 };
 
-// 실제 모의고사 로직을 담은 내부 컴포넌트
 function MockExamContent() {
   const router = useRouter();
 
+  // 1. 문제 생성 (4과목 80문제 + 회차 정보(origin) 포함)
   const mockQuestions = useMemo(() => {
-    // ✅ 소방설비기사는 4과목이므로 배열 4개 생성 (산업안전은 6개)
     const subjects: any[][] = [[], [], [], []];
-    
-    // 데이터가 없을 경우 방어 코드
     if (!allQuestions) return [];
 
     Object.entries(allQuestions).forEach(([sessionKey, qList]: [string, any]) => {
-      if (!Array.isArray(qList)) return; // qList가 배열인지 확인
+      if (!Array.isArray(qList)) return;
       qList.forEach((q: any, idx: number) => {
         const sIdx = Math.floor(idx / 20);
-        // 4과목(0~3)까지만 수집
-        if (sIdx < 4) {
-          subjects[sIdx].push({ ...q, origin: sessionKey });
-        }
+        // ✅ q.origin 에 "2023-1" 같은 회차 정보를 심습니다.
+        if (sIdx < 4) subjects[sIdx].push({ ...q, origin: sessionKey });
       });
     });
 
     const getRandom = (pool: any[], count: number) => 
-      [...pool].sort(() => Math.random() - 0.5).slice(0, count);
+      [...pool].sort(() => Math.random() - 0.5).slice(0, Math.min(count, pool.length));
 
-    // 각 과목당 20문제씩 추출
     const selected = subjects.flatMap((pool) => getRandom(pool, 20));
     
     return selected.map((q: any) => ({
       ...q,
-      shuffledOptions: shuffleArray(q.options.map((text: string, i: number) => ({ text, originalNum: i + 1 })))
+      shuffledOptions: shuffleArray((q.options || []).map((text: string, i: number) => ({ text, originalNum: i + 1 })))
     }));
-  }, []); // 의존성 배열 비움 (최초 1회만 실행)
+  }, []);
 
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
@@ -56,7 +49,9 @@ function MockExamContent() {
   const [isExamMode, setIsExamMode] = useState(false);
 
   const q = mockQuestions[index];
-  const currentCorrectNum = useMemo(() => q ? q.shuffledOptions.findIndex((opt: any) => opt.originalNum === q.answer) + 1 : 0, [q]);
+  const currentCorrectNum = useMemo(() => 
+    q?.shuffledOptions?.findIndex((opt: any) => opt.originalNum === q.answer) + 1 || 0
+  , [q]);
 
   useEffect(() => {
     if (mockQuestions.length > 0) setAnswers(Array(mockQuestions.length).fill(0));
@@ -64,13 +59,13 @@ function MockExamContent() {
     return () => clearInterval(timer);
   }, [mockQuestions]);
 
+  // 2. 통계 계산 (실시간 과목별 점수)
   const stats = useMemo(() => {
     if (mockQuestions.length === 0) return null;
     const totalCorrect = answers.filter((ans, idx) => mockQuestions[idx] && ans === mockQuestions[idx].answer).length;
     const totalSolved = answers.filter(a => a !== 0).length;
     const currentTotalScore = Math.round((totalCorrect / mockQuestions.length) * 100);
     
-    // ✅ 4과목 통계 계산 (0, 1, 2, 3)
     const subjectDetails = [0, 1, 2, 3].map(sIdx => {
       const subAns = answers.slice(sIdx * 20, (sIdx + 1) * 20);
       const subQue = mockQuestions.slice(sIdx * 20, (sIdx + 1) * 20);
@@ -84,10 +79,7 @@ function MockExamContent() {
   const prev = () => { if (index > 0) { setIndex(index - 1); setResult(null); } };
 
   const handleSelectAnswer = (originalNum: number) => {
-    if (!isExamMode && result) {
-      next();
-      return;
-    }
+    if (!isExamMode && result) { next(); return; }
     const newAnswers = [...answers];
     newAnswers[index] = originalNum;
     setAnswers(newAnswers);
@@ -99,33 +91,25 @@ function MockExamContent() {
   };
 
   const submit = () => {
-    // ✅ 소방 전용 키값 사용 (fire-wrong-list)
     const savedWrongs = JSON.parse(localStorage.getItem("fire-wrong-list") || "[]");
     const currentWrongs = mockQuestions
       .filter((que, i) => answers[i] !== 0 && answers[i] !== que.answer)
       .map(que => ({ ...que, examId: que.origin, addedAt: new Date().getTime() }));
-    const correctIds = mockQuestions.filter((que, i) => answers[i] === que.answer).map(que => `${que.origin}-${que.id}`);
-    const filteredSaved = savedWrongs.filter((v: any) => !correctIds.includes(`${v.examId}-${v.id}`));
-    const uniqueWrongs = [...currentWrongs, ...filteredSaved].filter((v, i, a) => 
-      a.findIndex(t => t.id === v.id && t.examId === v.examId) === i
-    );
-
-    localStorage.setItem("fire-wrong-list", JSON.stringify(uniqueWrongs));
+    
+    localStorage.setItem("fire-wrong-list", JSON.stringify([...currentWrongs, ...savedWrongs]));
     localStorage.setItem("fire-answers", JSON.stringify(answers));
-    // 모의고사 질문 저장 (결과 페이지에서 사용)
     sessionStorage.setItem("fire-mock-questions", JSON.stringify(mockQuestions)); 
     localStorage.setItem("fire-id", "랜덤 모의고사");
     localStorage.setItem("fire-time", `${Math.floor(seconds/60)}:${(seconds%60).toString().padStart(2,'0')}`);
-    
-    // ✅ 소방 결과 페이지로 이동
     router.push("/fire/result");
   };
 
+  // 3. 키보드 단축키
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!q) return;
       if (['1', '2', '3', '4'].includes(e.key)) {
-        if (!isExamMode && result) { next(); } 
+        if (!isExamMode && result) next();
         else {
           const opt = q.shuffledOptions[Number(e.key) - 1];
           if (opt) handleSelectAnswer(opt.originalNum);
@@ -138,165 +122,101 @@ function MockExamContent() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [index, isExamMode, result, q]);
 
-  if (!q || !stats) return <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", display: "flex", justifyContent: "center", alignItems: "center" }}>문제 데이터를 불러오는 중...</div>;
+  if (!q || !stats) return <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", display: "flex", justifyContent: "center", alignItems: "center" }}>데이터 로딩 중...</div>;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "20px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         
-        {/* 상단바 (소방 스타일) */}
-        <div style={{ 
-          display: "flex", 
-          justifyContent: "space-between", 
-          alignItems: "center", 
-          marginBottom: 15,
-          gap: "8px",
-          flexWrap: "nowrap" 
-        }}>
-          <div style={{ 
-            display: "flex", 
-            alignItems: "center", 
-            gap: "6px", 
-            overflow: "hidden", 
-            whiteSpace: "nowrap" 
-          }}>
-            <span style={{ fontSize: "clamp(1rem, 4vw, 1.2rem)" }}>🎯</span>
-            <span style={{ 
-              fontWeight: "bold", 
-              fontSize: "clamp(0.85rem, 3.8vw, 1.05rem)", 
-              letterSpacing: "-0.02em"
-            }}>
-              소방 랜덤 모의고사
-            </span>
-            <span style={{ 
-              backgroundColor: "#333", 
-              padding: "2px 6px", 
-              borderRadius: "5px", 
-              fontSize: "0.65rem", 
-              color: "#FF5252", // 소방 컬러
-              flexShrink: 0 
-            }}>
-              {q.origin} 출제
+        {/* 상단바 */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "bold" }}>🚒 소방 랜덤 모의고사</h1>
+            {/* ✅ [추가] 회차 정보 표시 */}
+            <span style={{ fontSize: "0.7rem", color: "#FF5252", backgroundColor: "#333", padding: "2px 6px", borderRadius: "4px" }}>
+              {q.origin} 기출
             </span>
           </div>
-
-          <div style={{ 
-            display: "flex", 
-            gap: "6px", 
-            alignItems: "center",
-            flexShrink: 0 
-          }}>
-            <span style={{ 
-              color: "#FFD54F", 
-              fontSize: "0.85rem", 
-              fontWeight: "bold",
-              whiteSpace: "nowrap"
-            }}>
-              ⏳ {Math.floor(seconds/60)}:{(seconds%60).toString().padStart(2,'0')}
-            </span>
-            <button 
-              onClick={() => {setIsExamMode(!isExamMode); setResult(null);}} 
-              style={{ 
-                padding: "4px 8px", 
-                borderRadius: 12, 
-                border: "none", 
-                backgroundColor: isExamMode ? "#444" : "#eee", 
-                color: isExamMode ? "white" : "black",
-                fontSize: "0.7rem",
-                fontWeight: "bold",
-                cursor: "pointer"
-              }}
-            >
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <span style={{ color: "#FFD54F", fontWeight: "bold" }}>⏳ {Math.floor(seconds/60)}:{(seconds%60).toString().padStart(2,'0')}</span>
+            <button onClick={() => {setIsExamMode(!isExamMode); setResult(null);}} style={{ padding: "5px 12px", borderRadius: 15, border: "none", backgroundColor: isExamMode ? "#444" : "#eee", color: isExamMode ? "white" : "black", fontSize: "0.75rem", fontWeight: "bold", cursor: "pointer" }}>
               {isExamMode ? "실전" : "학습"}
             </button>
           </div>
         </div>
 
         {/* 종합 현황판 */}
-        <div style={{ backgroundColor: "#1E1E1E", padding: "15px", borderRadius: "15px", border: "1px solid #333", marginBottom: "15px", display: "flex", justifyContent: "space-around", alignItems: "center" }}>
+        <div style={{ backgroundColor: "#1E1E1E", padding: "15px", borderRadius: "15px", border: "1px solid #333", marginBottom: "15px", display: "flex", justifyContent: "space-around" }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: "0.7rem", color: "#aaa" }}>진행도</div>
-            {/* ✅ 전체 80문제 (4과목 * 20) */}
             <div style={{ fontSize: "1.1rem", fontWeight: "bold" }}>{stats.totalSolved} / {mockQuestions.length}</div>
           </div>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "0.7rem", color: "#aaa" }}>현재 정답</div>
-            <div style={{ fontSize: "1.1rem", fontWeight: "bold", color: "#4CAF50" }}>{stats.totalCorrect}개</div>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "0.7rem", color: "#aaa" }}>예상 점수</div>
-            {/* ✅ 점수 색상 조건 변경 (60점 이상 합격색) */}
+            <div style={{ fontSize: "0.7rem", color: "#aaa" }}>현재 점수</div>
             <div style={{ fontSize: "1.4rem", fontWeight: "bold", color: stats.currentTotalScore >= 60 ? "#4CAF50" : "#FF5252" }}>{stats.currentTotalScore}점</div>
           </div>
         </div>
 
-        {/* 과목별 타일 (4개) */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "25px" }}>
-          {stats.subjectDetails.map((item, i) => (
-            <div key={i} style={{ 
-              backgroundColor: "#1E1E1E", padding: "8px 2px", borderRadius: "10px", textAlign: "center",
-              // ✅ 현재 과목 강조 (Red 테두리)
-              border: `1px solid ${Math.floor(index/20) === i ? "#FF5252" : "#333"}`
-            }}>
-              <div style={{ fontSize: "0.6rem", color: "#aaa" }}>{i+1}과목</div>
-              <div style={{ fontSize: "0.8rem", fontWeight: "bold", color: item.score >= 40 ? "#4CAF50" : "#FF5252" }}>{item.corrects}/20</div>
-            </div>
-          ))}
-        </div>
-
-        {/* 문제 영역 */}
-        <h2 style={{ backgroundColor: "#1E1E1E", padding: "20px", borderRadius: "12px", border: "1px solid #333", marginBottom: 20 }}>
-          <span style={{ color: "#FF5252", marginRight: 10 }}>Q{index + 1}.</span>{q.question}
-        </h2>
-
-        {q.image && (
-          <div style={{ marginBottom: 20, textAlign: "center", background: "#000", padding: 10, borderRadius: 10, border: "1px solid #333" }}>
-            <img src={q.image} alt="문제 이미지" style={{ maxWidth: "100%", maxHeight: "300px" }} />
-          </div>
-        )}
-
-        {/* 보기 영역 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 30 }}>
-          {q.shuffledOptions.map((opt: any, i: number) => {
-            const isSelected = answers[index] === opt.originalNum;
-            let bgColor = "#2C2C2C";
-            let borderColor = "#333";
-            if (!isExamMode && result) {
-              if (opt.originalNum === q.answer) { bgColor = "#1B5E20"; borderColor = "#4CAF50"; } 
-              else if (isSelected) { bgColor = "#3E2723"; borderColor = "#FF5252"; }
-            } else if (isSelected) { 
-              // ✅ 선택 시 소방 스타일(주황색)
-              bgColor = "#D84315"; borderColor = "#FF7043"; 
-            }
+        {/* ✅ 과목별 실시간 점수 타일 */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "25px" }}>
+          {stats.subjectDetails.map((item, i) => {
+            const isCurrent = Math.floor(index / 20) === i;
             return (
-              <div key={i} onClick={() => handleSelectAnswer(opt.originalNum)} style={{ padding: "16px 20px", borderRadius: "10px", backgroundColor: bgColor, border: `2px solid ${borderColor}`, cursor: "pointer" }}>
-                {i + 1}. {opt.text}
-                {opt.image && <img src={opt.image} alt="보기 이미지" style={{ maxWidth: "200px", marginTop: "5px", borderRadius: "5px" }} />}
+              <div key={i} style={{ 
+                backgroundColor: "#1E1E1E", padding: "10px 2px", borderRadius: "10px", textAlign: "center",
+                border: `1px solid ${isCurrent ? "#FF5252" : "#333"}`,
+                boxShadow: isCurrent ? "0 0 10px rgba(255, 82, 82, 0.2)" : "none"
+              }}>
+                <div style={{ fontSize: "0.6rem", color: "#aaa" }}>{i+1}과목</div>
+                <div style={{ fontSize: "0.85rem", fontWeight: "bold", color: item.score < 40 ? "#FF5252" : "#4CAF50" }}>{item.corrects}/20</div>
+                <div style={{ fontSize: "0.7rem", color: item.score < 40 ? "#FF8A80" : "#81C784", fontWeight: "bold" }}>{item.score}점</div>
               </div>
             );
           })}
         </div>
 
-        {/* 해설창 */}
+        {/* 문제 영역 */}
+        <div style={{ backgroundColor: "#1E1E1E", padding: "20px", borderRadius: "12px", border: "1px solid #333", marginBottom: 20 }}>
+          <h2 style={{ fontSize: "1.2rem", lineHeight: "1.6", margin: 0 }}>
+            <span style={{ color: "#FF5252", marginRight: 10, fontWeight: "900" }}>Q{index + 1}.</span>{q.question}
+          </h2>
+          {q.image && <img src={q.image} alt="문제 이미지" style={{ maxWidth: "100%", maxHeight: "300px", marginTop: 20, borderRadius: 10 }} />}
+        </div>
+
+        {/* 보기 영역 */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 30 }}>
+          {q.shuffledOptions.map((opt: any, i: number) => {
+            const isSelected = answers[index] === opt.originalNum;
+            let bgColor = "#2C2C2C";
+            if (isSelected) bgColor = "#D84315";
+            if (!isExamMode && result) {
+              if (opt.originalNum === q.answer) bgColor = "#1B5E20";
+              else if (isSelected) bgColor = "#3E2723";
+            }
+            return (
+              <div key={i} onClick={() => handleSelectAnswer(opt.originalNum)} style={{ padding: "18px 20px", borderRadius: "12px", backgroundColor: bgColor, border: "1px solid #333", cursor: "pointer" }}>
+                {i + 1}. {opt.text}
+                {opt.image && <img src={opt.image} alt="보기 이미지" style={{ maxWidth: "200px", marginTop: 10, borderRadius: 5 }} />}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 해설 (학습모드 전용) */}
         {!isExamMode && result && (
           <div style={{ backgroundColor: "#1E1E1E", padding: 25, borderRadius: 15, border: `1px solid ${result === "correct" ? "#4CAF50" : "#FF5252"}`, marginBottom: 30 }}>
             <h3 style={{ margin: "0 0 10px 0", color: result === "correct" ? "#81C784" : "#FF5252" }}>
-              {result === "correct" ? "✅ 정답입니다!" : `❌ 오답 (정답: ${currentCorrectNum}번)`}
+              {result === "correct" ? "✅ 정답!" : `❌ 오답 (정답: ${currentCorrectNum}번)`}
             </h3>
             <div style={{ lineHeight: "1.6", color: "#ddd" }}><strong>[해설]</strong> {q.explanation}</div>
-            <p style={{ textAlign: "center", color: "#666", marginTop: 15, fontSize: "0.8rem" }}>[Enter]나 번호키, 또는 보기를 다시 클릭하여 다음으로</p>
+            <p style={{ textAlign: "center", color: "#666", marginTop: 15, fontSize: "0.8rem" }}>보기를 다시 클릭하거나 [Enter]를 누르면 다음으로</p>
           </div>
         )}
 
-        {/* 하단 버튼 */}
+        {/* 하단 네비게이션 */}
         <div style={{ display: "flex", gap: 12, justifyContent: "center", paddingBottom: 60 }}>
-          <button onClick={prev} disabled={index === 0} style={{ padding: "14px 28px", background: "#333", color: "white", borderRadius: 10, border: "none" }}>이전</button>
-          <button onClick={index === mockQuestions.length - 1 ? submit : next} style={{ 
-            padding: "14px 35px", 
-            // ✅ 버튼 색상 Red 계열로 변경
-            background: index === mockQuestions.length - 1 ? "#4CAF50" : "#FF5252", 
-            color: "white", borderRadius: 10, border: "none", fontWeight: "bold" 
-          }}>
+          <button onClick={prev} disabled={index === 0} style={{ padding: "14px 28px", background: "#333", color: "white", borderRadius: 10, border: "none", cursor: "pointer" }}>이전</button>
+          <button onClick={index === mockQuestions.length - 1 ? submit : next} style={{ padding: "14px 35px", background: index === mockQuestions.length - 1 ? "#4CAF50" : "#FF5252", color: "white", borderRadius: 10, border: "none", fontWeight: "bold", cursor: "pointer" }}>
             {index === mockQuestions.length - 1 ? "최종 제출 🏁" : "다음 문제 ➡️"}
           </button>
         </div>
@@ -305,10 +225,9 @@ function MockExamContent() {
   );
 }
 
-// 🚦 메인 페이지 컴포넌트 (Suspense로 감싸기)
 export default function MockExamPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", display: "flex", justifyContent: "center", alignItems: "center" }}>모의고사 데이터를 생성 중입니다...</div>}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", display: "flex", justifyContent: "center", alignItems: "center" }}>로딩 중...</div>}>
       <MockExamContent />
     </Suspense>
   );
