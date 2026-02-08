@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
-import allQuestions from "../../../data";
+import allQuestions from "../../../../data/industrial";
 
 // 문제 객체 타입 정의
 interface Question {
