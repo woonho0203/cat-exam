@@ -150,26 +150,45 @@ export default function ExamPage() {
   );
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "15px" }}>
-      {/* 📱 모바일 자동 글씨 크기 조절을 위한 내부 스타일 주입 */}
+    <div style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "clamp(10px, 4vw, 20px)" }}>
+      {/* 📱 모바일 자동 글씨 크기 최적화를 위한 CSS 주입 (기존 로직 100% 유지) */}
       <style jsx global>{`
         :root {
-          --text-header: 1.1rem;
-          --text-stats-label: 0.7rem;
-          --text-stats-val: 1.1rem;
-          --text-question: 1.2rem;
-          --text-option: 1.05rem;
-          --text-explanation: 0.95rem;
+          --fs-header: 1.1rem;
+          --fs-stats-label: 0.7rem;
+          --fs-stats-val: 1.1rem;
+          --fs-subject-num: 0.6rem;
+          --fs-subject-score: 0.8rem;
+          --fs-question: 1.2rem;
+          --fs-option: 1.05rem;
+          --fs-explanation: 0.95rem;
         }
 
-        @media (max-width: 600px) {
+        /* 768px 이하 태블릿 및 모바일 */
+        @media (max-width: 768px) {
           :root {
-            --text-header: 0.95rem;
-            --text-stats-label: 0.6rem;
-            --text-stats-val: 0.9rem;
-            --text-question: 1.05rem;
-            --text-option: 0.9rem;
-            --text-explanation: 0.85rem;
+            --fs-header: 1rem;
+            --fs-stats-label: 0.65rem;
+            --fs-stats-val: 1rem;
+            --fs-subject-num: 0.55rem;
+            --fs-subject-score: 0.75rem;
+            --fs-question: 1.1rem;
+            --fs-option: 0.95rem;
+            --fs-explanation: 0.9rem;
+          }
+        }
+
+        /* 480px 이하 초소형 모바일 */
+        @media (max-width: 480px) {
+          :root {
+            --fs-header: 0.9rem;
+            --fs-stats-label: 0.6rem;
+            --fs-stats-val: 0.85rem;
+            --fs-subject-num: 0.5rem;
+            --fs-subject-score: 0.65rem;
+            --fs-question: 1rem;
+            --fs-option: 0.85rem;
+            --fs-explanation: 0.8rem;
           }
         }
       `}</style>
@@ -178,13 +197,13 @@ export default function ExamPage() {
         
         {/* 상단 헤더 */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
-          <span style={{ fontWeight: "bold", fontSize: "var(--text-header)" }}>👷 {examId}회차</span>
+          <span style={{ fontWeight: "bold", fontSize: "var(--fs-header)" }}>👷 {examId}회차</span>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <span style={{ color: "#FFD54F", fontWeight: "bold", fontSize: "0.9rem" }}>⏱ {Math.floor(seconds/60)}:{(seconds%60).toString().padStart(2,'0')}</span>
             <button 
               onClick={() => {setIsExamMode(!isExamMode); setResult(null);}} 
               style={{ 
-                padding: "6px 12px", borderRadius: 20, border: "none", cursor: "pointer",
+                padding: "6px 15px", borderRadius: 20, border: "none", cursor: "pointer",
                 backgroundColor: isExamMode ? "#444" : "#eee", color: isExamMode ? "white" : "black",
                 fontWeight: "bold", fontSize: "0.75rem"
               }}>
@@ -199,16 +218,16 @@ export default function ExamPage() {
           marginBottom: "15px", display: "flex", justifyContent: "space-around", alignItems: "center" 
         }}>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "var(--text-stats-label)", color: "#aaa" }}>진행도</div>
-            <div style={{ fontSize: "var(--text-stats-val)", fontWeight: "bold" }}>{stats.totalSolved} / {questions.length}</div>
+            <div style={{ fontSize: "var(--fs-stats-label)", color: "#aaa" }}>진행도</div>
+            <div style={{ fontSize: "var(--fs-stats-val)", fontWeight: "bold" }}>{stats.totalSolved} / {questions.length}</div>
           </div>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "var(--text-stats-label)", color: "#aaa" }}>현재 정답</div>
-            <div style={{ fontSize: "var(--text-stats-val)", fontWeight: "bold", color: "#4CAF50" }}>{stats.totalCorrect}개</div>
+            <div style={{ fontSize: "var(--fs-stats-label)", color: "#aaa" }}>현재 정답</div>
+            <div style={{ fontSize: "var(--fs-stats-val)", fontWeight: "bold", color: "#4CAF50" }}>{stats.totalCorrect}개</div>
           </div>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "var(--text-stats-label)", color: "#aaa" }}>평균 점수</div>
-            <div style={{ fontSize: "calc(var(--text-stats-val) * 1.2)", fontWeight: "bold", color: stats.currentTotalScore >= 60 ? "#4FC3F7" : "#FF5252" }}>{stats.currentTotalScore}점</div>
+            <div style={{ fontSize: "var(--fs-stats-label)", color: "#aaa" }}>평균 점수</div>
+            <div style={{ fontSize: "calc(var(--fs-stats-val) * 1.2)", fontWeight: "bold", color: stats.currentTotalScore >= 60 ? "#4FC3F7" : "#FF5252" }}>{stats.currentTotalScore}점</div>
           </div>
         </div>
 
@@ -219,21 +238,21 @@ export default function ExamPage() {
             const isFail = item.score < 40;
             return (
               <div key={i} style={{ 
-                backgroundColor: "#1E1E1E", padding: "8px 2px", borderRadius: "8px", textAlign: "center",
+                backgroundColor: "#1E1E1E", padding: "10px 2px", borderRadius: "10px", textAlign: "center",
                 border: `1px solid ${isCurrentSubject ? "#4FC3F7" : "#333"}`,
                 boxShadow: isCurrentSubject ? "0 0 10px rgba(79, 195, 247, 0.2)" : "none"
               }}>
-                <div style={{ fontSize: "0.55rem", color: "#aaa" }}>{i+1}과목</div>
-                <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: isFail ? "#FF5252" : "#4CAF50" }}>{item.corrects}/20</div>
-                <div style={{ fontSize: "0.6rem", color: isFail ? "#FF8A80" : "#81C784", fontWeight: "bold" }}>{item.score}점</div>
+                <div style={{ fontSize: "var(--fs-subject-num)", color: "#aaa" }}>{i+1}과목</div>
+                <div style={{ fontSize: "var(--fs-subject-score)", fontWeight: "bold", color: isFail ? "#FF5252" : "#4CAF50" }}>{item.corrects}/20</div>
+                <div style={{ fontSize: "calc(var(--fs-subject-num) * 1.1)", color: isFail ? "#FF8A80" : "#81C784", fontWeight: "bold" }}>{item.score}점</div>
               </div>
             );
           })}
         </div>
 
         {/* 문제 영역 */}
-        <div style={{ backgroundColor: "#1E1E1E", padding: "20px", borderRadius: "15px", border: "1px solid #333", marginBottom: 20 }}>
-          <h2 style={{ fontSize: "var(--text-question)", lineHeight: "1.6", margin: 0, wordBreak: "keep-all" }}>
+        <div style={{ backgroundColor: "#1E1E1E", padding: "clamp(15px, 5vw, 25px)", borderRadius: "15px", border: "1px solid #333", marginBottom: 20 }}>
+          <h2 style={{ fontSize: "var(--fs-question)", lineHeight: "1.6", margin: 0, wordBreak: "keep-all" }}>
             <span style={{ color: "#4FC3F7", marginRight: 10, fontWeight: "900" }}>Q{index + 1}.</span>
             {q.question}
           </h2>
@@ -241,12 +260,12 @@ export default function ExamPage() {
 
         {q.image && (
           <div style={{ marginBottom: 20, textAlign: "center", background: "#000", padding: 10, borderRadius: 12, border: "1px solid #333" }}>
-            <img src={q.image} alt="문제 이미지" style={{ maxWidth: "100%", maxHeight: "250px", objectFit: "contain" }} />
+            <img src={q.image} alt="문제 이미지" style={{ maxWidth: "100%", maxHeight: "clamp(200px, 50vw, 300px)", objectFit: "contain" }} />
           </div>
         )}
 
         {/* 보기 영역 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 30 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 30 }}>
           {q.shuffledOptions?.map((opt: any, i: number) => {
             const isSelected = answers[index] === opt.originalNum;
             let bgColor = "#2C2C2C";
@@ -264,10 +283,10 @@ export default function ExamPage() {
                 key={i} 
                 onClick={() => handleSelectAnswer(opt.originalNum)} 
                 style={{ 
-                  padding: "16px 18px", borderRadius: "12px", backgroundColor: bgColor, 
+                  padding: "clamp(12px, 4vw, 18px) clamp(15px, 4vw, 20px)", borderRadius: "12px", backgroundColor: bgColor, 
                   border: `2px solid ${borderColor}`, cursor: "pointer", transition: "all 0.2s" 
                 }}>
-                <div style={{ fontSize: "var(--text-option)" }}>{i + 1}. {opt.text}</div>
+                <div style={{ fontSize: "var(--fs-option)" }}>{i + 1}. {opt.text}</div>
                 {opt.image && <img src={opt.image} alt="보기 이미지" style={{ maxWidth: "200px", marginTop: 10, borderRadius: 5 }} />}
               </div>
             );
@@ -277,13 +296,13 @@ export default function ExamPage() {
         {/* 해설창 (학습모드) */}
         {!isExamMode && result && (
           <div style={{ 
-            backgroundColor: "#1E1E1E", padding: "20px", borderRadius: "15px", 
+            backgroundColor: "#1E1E1E", padding: "clamp(15px, 5vw, 25px)", borderRadius: "15px", 
             border: `1px solid ${result === "correct" ? "#4CAF50" : "#FF5252"}`, marginBottom: 30 
           }}>
             <h3 style={{ margin: "0 0 10px 0", color: result === "correct" ? "#81C784" : "#FF5252", fontSize: "1.1rem" }}>
               {result === "correct" ? "✅ 정답입니다!" : `❌ 오답 (정답: ${currentCorrectNum}번)`}
             </h3>
-            <div style={{ lineHeight: "1.6", color: "#ddd", fontSize: "var(--text-explanation)" }}>
+            <div style={{ lineHeight: "1.6", color: "#ddd", fontSize: "var(--fs-explanation)" }}>
               <strong>[해설]</strong> {q.explanation}
             </div>
             <p style={{ textAlign: "center", color: "#666", marginTop: 15, fontSize: "0.75rem" }}>보기를 한 번 더 클릭하거나 [Enter]를 누르면 다음으로</p>
@@ -291,21 +310,23 @@ export default function ExamPage() {
         )}
 
         {/* 네비게이션 버튼 */}
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", paddingBottom: 80 }}>
+        <div style={{ display: "flex", gap: 15, justifyContent: "center", paddingBottom: 80 }}>
           <button 
             onClick={prev} 
             disabled={index === 0} 
             style={{ 
-              padding: "12px 25px", background: "#333", color: "white", borderRadius: 12, 
-              border: "none", cursor: index === 0 ? "default" : "pointer", opacity: index === 0 ? 0.5 : 1, fontSize: "0.9rem"
+              padding: "14px clamp(20px, 6vw, 30px)", background: "#333", color: "white", borderRadius: 12, 
+              border: "none", cursor: index === 0 ? "default" : "pointer", opacity: index === 0 ? 0.5 : 1,
+              fontSize: "0.9rem"
             }}>
             이전
           </button>
           <button 
             onClick={index === questions.length - 1 ? submit : next} 
             style={{ 
-              padding: "12px 40px", background: index === questions.length - 1 ? "#4CAF50" : "#2196F3", 
-              color: "white", borderRadius: 12, border: "none", fontWeight: "bold", cursor: "pointer", fontSize: "0.9rem"
+              padding: "14px clamp(30px, 8vw, 45px)", background: index === questions.length - 1 ? "#4CAF50" : "#2196F3", 
+              color: "white", borderRadius: 12, border: "none", fontWeight: "bold", cursor: "pointer",
+              fontSize: "0.9rem"
             }}>
             {index === questions.length - 1 ? "최종 제출 🏁" : "다음 문제 ➡️"}
           </button>
