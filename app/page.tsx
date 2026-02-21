@@ -12,6 +12,15 @@ export default function MainSelection() {
       description: "안전관리의 시작, 산업안전기사 CBT",
       path: "/industrial", // 산업안전 페이지 경로
     },
+    // ✅ 전기기사 데이터 추가됨
+    {
+      title: "전기기사",
+      subTitle: "Electrical Engineer",
+      icon: "⚡",
+      color: "#FFD54F",
+      description: "전기 분야 최고의 전문가, 전기기사 CBT",
+      path: "/electric", // 전기기사 페이지 경로
+    },
     {
       title: "소방설비기사",
       subTitle: "Fire Protection Facilities Engineer",
@@ -55,7 +64,7 @@ export default function MainSelection() {
         gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", 
         gap: "20px", 
         width: "100%", 
-        maxWidth: "800px" 
+        maxWidth: "1000px" // 카드 3개가 나란히 들어갈 수 있도록 최대 너비를 조금 늘렸습니다. (800px -> 1000px)
       }}>
         {certifications.map((cert, idx) => (
           <Link href={cert.path} key={idx} style={{ textDecoration: "none" }}>
@@ -63,11 +72,15 @@ export default function MainSelection() {
               style={{
                 backgroundColor: "#1E1E1E",
                 padding: "40px 20px",
+                height: "100%", // 카드 높이를 균일하게 맞춤
                 borderRadius: "24px",
                 border: "1px solid #333",
                 textAlign: "center",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.transform = "translateY(-10px)";
@@ -96,7 +109,7 @@ export default function MainSelection() {
       </div>
 
       <footer style={{ marginTop: "60px", color: "#555", fontSize: "0.85rem" }}>
-        © 2025 CBT Prep System. All rights reserved.
+        © 2026 CBT Prep System. All rights reserved.
       </footer>
     </div>
   );

@@ -2,14 +2,11 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
-// ✅ 데이터 경로
-import allQuestions from "../../../../data/industrial"; 
+import allQuestions from "../../../../data/electric"; 
 
-// ✅ 수식 렌더링을 위한 라이브러리 추가
 import 'katex/dist/katex.min.css';
 import { InlineMath } from 'react-katex';
 
-// 1. 타입 정의
 interface Question {
   id: number;
   question: string;
@@ -21,7 +18,6 @@ interface Question {
   origin?: string; 
 }
 
-// 2. 보기 섞기 함수
 const shuffleArray = (array: any[]) => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -31,7 +27,6 @@ const shuffleArray = (array: any[]) => {
   return shuffled;
 };
 
-// 3. 문제 처리 (보기 섞기) 공통 함수
 const processQuestions = (rawQuestions: any[], defaultOrigin?: string) => {
   return rawQuestions.map((q: any) => ({
     ...q,
@@ -43,18 +38,14 @@ const processQuestions = (rawQuestions: any[], defaultOrigin?: string) => {
   }));
 };
 
-// ✅ 텍스트 내의 $...$ 수식을 찾아 변환해 주는 도우미 함수 추가
 const renderTextWithMath = (text: string) => {
   if (!text || typeof text !== "string") return text;
-  // $기호로 감싸진 부분을 기준으로 텍스트를 나눔
   const parts = text.split(/(\$[\s\S]*?\$)/g);
   return parts.map((part, index) => {
-    // $로 시작하고 끝나는 부분이면 수식으로 렌더링
     if (part.startsWith("$") && part.endsWith("$")) {
-      const math = part.slice(1, -1); // 양끝 $ 기호 제거
+      const math = part.slice(1, -1);
       return <InlineMath key={index} math={math} />;
     }
-    // 일반 텍스트는 그대로 렌더링
     return <span key={index}>{part}</span>;
   });
 };
@@ -65,7 +56,6 @@ export default function ExamPage() {
   const rawId = params.id as string; 
   const isRandomMode = rawId === "random";
 
-  // 상태 관리
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
@@ -74,20 +64,19 @@ export default function ExamPage() {
   const [isExamMode, setIsExamMode] = useState(false);
   const [seconds, setSeconds] = useState(0);
 
-  // 4. 데이터 로딩
   useEffect(() => {
     const loadQuestions = () => {
       if (isRandomMode) {
-        const savedMock = localStorage.getItem("cbt-mock-questions");
-        const savedId = localStorage.getItem("cbt-id");
+        const savedMock = localStorage.getItem("elec-mock-questions");
+        const savedId = localStorage.getItem("elec-id");
 
-        const subjects: any[][] = [[], [], [], [], [], []];
+        const subjects: any[][] = [[], [], [], [], []];
         Object.entries(allQuestions).forEach(([sessionKey, qList]: [string, any]) => {
           if (!Array.isArray(qList)) return;
 
           qList.forEach((q: any, idx: number) => {
             const sIdx = Math.floor(idx / 20); 
-            if (sIdx < 6) {
+            if (sIdx < 5) { 
               subjects[sIdx].push({ ...q, origin: sessionKey });
             }
           });
@@ -99,8 +88,8 @@ export default function ExamPage() {
         const selectedRaw = subjects.flatMap((pool) => getRandom(pool, 20));
         const finalQuestions = processQuestions(selectedRaw);
 
-        localStorage.setItem("cbt-mock-questions", JSON.stringify(finalQuestions));
-        localStorage.setItem("cbt-id", "랜덤 모의고사");
+        localStorage.setItem("elec-mock-questions", JSON.stringify(finalQuestions));
+        localStorage.setItem("elec-id", "랜덤 모의고사");
         
         setQuestions(finalQuestions);
         setIsExamMode(true);
@@ -115,7 +104,7 @@ export default function ExamPage() {
         }
 
         const finalQuestions = processQuestions(originalData, rawId);
-        localStorage.setItem("cbt-id", rawId);
+        localStorage.setItem("elec-id", rawId);
         setQuestions(finalQuestions);
       }
       setLoading(false);
@@ -150,21 +139,21 @@ export default function ExamPage() {
     q ? q.shuffledOptions?.findIndex((opt: any) => opt.originalNum === q.answer)! + 1 : 0
   , [q]);
 
-  // 6. 통계 계산 (퍼센트 계산 로직 추가됨 ✅)
   const stats = useMemo(() => {
     if (questions.length === 0) return null;
     const totalCorrect = answers.filter((ans, idx) => questions[idx] && ans === questions[idx].answer).length;
     const totalSolved = answers.filter(a => a !== 0).length;
     const currentTotalScore = Math.round((totalCorrect / questions.length) * 100);
     
-    // 진행률 퍼센트 계산
     const progressPercent = Math.round((totalSolved / questions.length) * 100);
 
-    const subjectDetails = [0, 1, 2, 3, 4, 5].map((sIdx) => {
+    const subjectNames = ["전기자기학", "전력공학", "전기기기", "회로이론/제어공학", "전기설비기술기준"];
+
+    const subjectDetails = [0, 1, 2, 3, 4].map((sIdx) => {
       const subAns = answers.slice(sIdx * 20, (sIdx + 1) * 20);
       const subQue = questions.slice(sIdx * 20, (sIdx + 1) * 20);
       const corrects = subAns.filter((ans, i) => subQue[i] && ans === subQue[i].answer).length;
-      return { corrects, score: corrects * 5 };
+      return { corrects, score: corrects * 5, name: subjectNames[sIdx] };
     });
     return { subjectDetails, totalCorrect, totalSolved, currentTotalScore, progressPercent };
   }, [answers, questions]);
@@ -189,7 +178,7 @@ export default function ExamPage() {
   };
 
   const submit = () => {
-    const savedWrongs = JSON.parse(localStorage.getItem("cbt-wrong-list") || "[]");
+    const savedWrongs = JSON.parse(localStorage.getItem("elec-wrong-list") || "[]");
     const currentWrongs = questions
       .filter((que: any, i: number) => answers[i] !== 0 && answers[i] !== que.answer)
       .map((que: any) => ({ ...que, examId: que.origin || rawId, addedAt: new Date().getTime() }));
@@ -203,14 +192,13 @@ export default function ExamPage() {
       a.findIndex((t) => t.id === v.id && t.examId === v.examId) === i
     );
 
-    localStorage.setItem("cbt-wrong-list", JSON.stringify(uniqueWrongs));
-    localStorage.setItem("cbt-answers", JSON.stringify(answers));
-    localStorage.setItem("cbt-time", `${Math.floor(seconds/60)}:${(seconds%60).toString().padStart(2,'0')}`);
+    localStorage.setItem("elec-wrong-list", JSON.stringify(uniqueWrongs));
+    localStorage.setItem("elec-answers", JSON.stringify(answers));
+    localStorage.setItem("elec-time", `${Math.floor(seconds/60)}:${(seconds%60).toString().padStart(2,'0')}`);
     
-    router.push("/industrial/result");
+    router.push("/electric/result");
   };
 
-  // 키보드 이벤트
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!q) return;
@@ -237,7 +225,6 @@ export default function ExamPage() {
   return (
     <div className="exam-container" style={{ minHeight: "100vh", backgroundColor: "#121212", color: "white", padding: "clamp(10px, 4vw, 20px)" }}>
       
-      {/* 📱 스타일 복구됨: 모바일 최적화 (이 부분이 빠져서 짧아 보였습니다!) */}
       <style jsx global>{`
         :root {
           --fs-header: 1.1rem;
@@ -258,13 +245,13 @@ export default function ExamPage() {
         {/* 상단 헤더 */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
           <div>
-            {isRandomMode && <span style={{ display: "block", fontSize: "0.75rem", color: "#888", marginBottom: "2px" }}>산업안전기사</span>}
+            {isRandomMode && <span style={{ display: "block", fontSize: "0.75rem", color: "#888", marginBottom: "2px" }}>전기기사</span>}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <h1 style={{ margin: 0, fontSize: "clamp(1rem, 4vw, 1.2rem)", fontWeight: "bold", color: isRandomMode ? "#fff" : "#4FC3F7" }}>
+              <h1 style={{ margin: 0, fontSize: "clamp(1rem, 4vw, 1.2rem)", fontWeight: "bold", color: isRandomMode ? "#fff" : "#FFD54F" }}>
                 {isRandomMode ? "🎯 랜덤 모의고사" : `📝 ${rawId}회차`}
               </h1>
               {isRandomMode && q.origin && (
-                <span style={{ fontSize: "0.6rem", color: "#4FC3F7", backgroundColor: "#333", padding: "2px 6px", borderRadius: "4px", fontWeight: "bold", whiteSpace: "nowrap" }}>
+                <span style={{ fontSize: "0.6rem", color: "#FFD54F", backgroundColor: "#333", padding: "2px 6px", borderRadius: "4px", fontWeight: "bold", whiteSpace: "nowrap" }}>
                   {q.origin} 기출
                 </span>
               )}
@@ -289,7 +276,6 @@ export default function ExamPage() {
         <div className="stat-box" style={{ backgroundColor: "#1E1E1E", padding: "12px", borderRadius: "15px", border: "1px solid #333", marginBottom: "15px", display: "flex", justifyContent: "space-around" }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: "0.6rem", color: "#aaa" }}>진행도</div>
-            {/* ✅ 화면 표시 변경: (NN%) 추가됨 */}
             <div className="stat-val" style={{ fontSize: "0.95rem", fontWeight: "bold" }}>
               {stats.totalSolved} / {questions.length} 
               <span style={{ fontSize: "0.8rem", color: "#aaa", marginLeft: "5px" }}>({stats.progressPercent}%)</span>
@@ -297,18 +283,18 @@ export default function ExamPage() {
           </div>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: "0.6rem", color: "#aaa" }}>평균 점수</div>
-            <div className="stat-val" style={{ fontSize: "1.2rem", fontWeight: "bold", color: stats.currentTotalScore >= 60 ? "#4FC3F7" : "#FF5252" }}>{stats.currentTotalScore}점</div>
+            <div className="stat-val" style={{ fontSize: "1.2rem", fontWeight: "bold", color: stats.currentTotalScore >= 60 ? "#4CAF50" : "#FF5252" }}>{stats.currentTotalScore}점</div>
           </div>
         </div>
 
         {/* 과목별 점수 타일 */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "4px", marginBottom: "20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "4px", marginBottom: "20px" }}>
           {stats.subjectDetails.map((item, i) => (
             <div key={i} className="subject-item" style={{ 
               backgroundColor: "#1E1E1E", padding: "6px 2px", borderRadius: "8px", textAlign: "center",
-              border: `1px solid ${Math.floor(index/20) === i ? "#4FC3F7" : "#333"}`
+              border: `1px solid ${Math.floor(index/20) === i ? "#FFD54F" : "#333"}`
             }}>
-              <div style={{ fontSize: "0.5rem", color: "#aaa" }}>{i+1}과목</div>
+              <div style={{ fontSize: "0.5rem", color: "#aaa", letterSpacing: "-0.5px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</div>
               <div style={{ fontSize: "0.7rem", fontWeight: "bold", color: item.score >= 40 ? "#4CAF50" : "#FF5252" }}>{item.corrects}/20</div>
               <div style={{ fontSize: "0.6rem", color: item.score >= 40 ? "#4CAF50" : "#FF5252", fontWeight: "bold" }}>{item.score}점</div>
             </div>
@@ -318,8 +304,7 @@ export default function ExamPage() {
         {/* 문제 영역 */}
         <div style={{ backgroundColor: "#1E1E1E", padding: "clamp(15px, 5vw, 25px)", borderRadius: "12px", border: "1px solid #333", marginBottom: 15 }}>
           <h2 style={{ fontSize: autoFontSize, lineHeight: "1.5", margin: 0, fontWeight: "500", wordBreak: "keep-all" }}>
-            <span style={{ color: "#4FC3F7", marginRight: 10, fontWeight: "900" }}>Q{index + 1}.</span>
-            {/* ✅ 문제 텍스트에 수식 렌더링 적용 */}
+            <span style={{ color: "#FFD54F", marginRight: 10, fontWeight: "900" }}>Q{index + 1}.</span>
             {renderTextWithMath(q.question)}
           </h2>
           {q.image && <img src={q.image} alt="문제 이미지" style={{ maxWidth: "100%", maxHeight: "250px", marginTop: 15, borderRadius: 10, display: "block" }} />}
@@ -336,7 +321,7 @@ export default function ExamPage() {
               if (opt.originalNum === q.answer) { bgColor = "#1B5E20"; borderColor = "#4CAF50"; } 
               else if (isSelected) { bgColor = "#3E2723"; borderColor = "#FF5252"; }
             } else if (isSelected) {
-              bgColor = "#1565C0"; borderColor = "#64B5F6";
+              bgColor = "#4A3600"; borderColor = "#FFD54F";
             }
 
             return (
@@ -349,7 +334,6 @@ export default function ExamPage() {
                   backgroundColor: bgColor, border: `2px solid ${borderColor}`, cursor: "pointer",
                   fontSize: "clamp(0.85rem, 4vw, 1rem)", lineHeight: "1.4", transition: "all 0.1s"
                 }}>
-                {/* ✅ 보기 텍스트에 수식 렌더링 적용 */}
                 <span style={{ fontWeight: "bold", marginRight: "8px" }}>{i + 1}.</span> {renderTextWithMath(opt.text)}
                 {opt.image && <img src={opt.image} alt="보기 이미지" style={{ maxWidth: "200px", marginTop: 10, borderRadius: 5, display: "block" }} />}
               </div>
@@ -363,7 +347,6 @@ export default function ExamPage() {
             <h3 style={{ fontSize: "1rem", margin: "0 0 10px 0", color: result === "correct" ? "#81C784" : "#FF5252" }}>
               {result === "correct" ? "✅ 정답입니다!" : `❌ 오답 (정답: ${currentCorrectNum}번)`}
             </h3>
-            {/* ✅ 해설 텍스트에 수식 렌더링 적용 */}
             <div style={{ lineHeight: "1.5", color: "#ddd", fontSize: "0.9rem" }}><strong>[해설]</strong> {renderTextWithMath(q.explanation)}</div>
             <p style={{ textAlign: "center", color: "#666", marginTop: 15, fontSize: "0.7rem" }}>보기를 다시 클릭하거나 [Enter]를 누르면 다음으로</p>
           </div>
@@ -381,7 +364,7 @@ export default function ExamPage() {
           <button 
             className="nav-btn"
             onClick={index === questions.length - 1 ? submit : next} 
-            style={{ flex: 2, padding: "14px 0", background: index === questions.length - 1 ? "#4CAF50" : "#2196F3", color: "white", borderRadius: 10, border: "none", fontWeight: "bold", cursor: "pointer", fontSize: "0.9rem" }}>
+            style={{ flex: 2, padding: "14px 0", background: index === questions.length - 1 ? "#4CAF50" : "#FFD54F", color: index === questions.length - 1 ? "white" : "black", borderRadius: 10, border: "none", fontWeight: "bold", cursor: "pointer", fontSize: "0.9rem" }}>
             {index === questions.length - 1 ? "최종 제출 🏁" : "다음 문제 ➡️"}
           </button>
         </div>
