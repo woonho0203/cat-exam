@@ -891,10 +891,10 @@ const questions = [
     id: 72,
     question: "상태방정식 $\\begin{bmatrix} \\dot{x}_{1} \\\\ \\dot{x}_{2} \\end{bmatrix} = \\begin{bmatrix} 0 & 1 \\\\ -3 & -4 \\end{bmatrix} \\begin{bmatrix} x_{1} \\\\ x_{2} \\end{bmatrix}$ 으로 표현되는 시스템의 상태천이행렬 $\\Phi(t)$는?",
     options: [
-      "$\\\\begin{bmatrix} 1.5e^{-t}-0.5e^{-3t} & -1.5e^{-t}+1.5e^{-3t} \\\\ 0.5e^{-t}-0.5e^{-3t} & -0.5e^{-t}+1.5e^{-3t} \\\\end{bmatrix}$",
-      "$\\\\begin{bmatrix} 1.5e^{-t}-0.5e^{-3t} & 0.5e^{-t}-0.5e^{-3t} \\\\ -1.5e^{-t}+1.5e^{-3t} & -0.5e^{-t}+1.5e^{-3t} \\\\end{bmatrix}$",
-      "$\\\\begin{bmatrix} 1.5e^{-t}-0.5e^{-4t} & 0.5e^{-t}-0.5e^{-4t} \\\\ -1.5e^{-t}+1.5e^{-4t} & -0.5e^{-t}+1.5e^{-4t} \\\\end{bmatrix}$",
-      "$\\\\begin{bmatrix} 1.5e^{-t}-0.5e^{-4t} & -1.5e^{-t}+1.5e^{-4t} \\\\ 0.5e^{-t}-0.5e^{-4t} & -0.5e^{-t}+1.5e^{-4t} \\\\end{bmatrix}$"
+      "$\\begin{bmatrix} 1.5e^{-t}-0.5e^{-3t} & -1.5e^{-t}+1.5e^{-3t} \\\\ 0.5e^{-t}-0.5e^{-3t} & -0.5e^{-t}+1.5e^{-3t} \\end{bmatrix}$",
+      "$\\begin{bmatrix} 1.5e^{-t}-0.5e^{-3t} & 0.5e^{-t}-0.5e^{-3t} \\\\ -1.5e^{-t}+1.5e^{-3t} & -0.5e^{-t}+1.5e^{-3t} \\end{bmatrix}$",
+      "$\\begin{bmatrix} 1.5e^{-t}-0.5e^{-4t} & 0.5e^{-t}-0.5e^{-4t} \\\\ -1.5e^{-t}+1.5e^{-4t} & -0.5e^{-t}+1.5e^{-4t} \\end{bmatrix}$",
+      "$\\begin{bmatrix} 1.5e^{-t}-0.5e^{-4t} & -1.5e^{-t}+1.5e^{-4t} \\\\ 0.5e^{-t}-0.5e^{-4t} & -0.5e^{-t}+1.5e^{-4t} \\end{bmatrix}$"
     ],
     answer: 2,
     explanation: "$\\Phi(t) = \\mathcal{L}^{-1}\\{(sI-A)^{-1}\\}$를 계산하면 2번 행렬이 유도됩니다.",

@@ -207,6 +207,41 @@ export default function ExamPage() {
     localStorage.setItem("cbt-answers", JSON.stringify(answers));
     localStorage.setItem("cbt-time", `${Math.floor(seconds/60)}:${(seconds%60).toString().padStart(2,'0')}`);
     
+    // === 💡 대시보드 연동을 위한 기록 저장 로직 추가 시작 ===
+    const today = new Date().toISOString().split('T')[0];
+    
+    // URL 파라미터(rawId)가 "2023-1" 형태일 경우 연도와 회차 분리
+    let examYear = "랜덤";
+    let examRound = "모의고사";
+    if (!isRandomMode && rawId.includes("-")) {
+      const parts = rawId.split("-");
+      examYear = `${parts[0]}년`;
+      examRound = `${parts[1]}회`;
+    } else if (!isRandomMode) {
+      examYear = rawId;
+      examRound = "기출";
+    }
+
+    const newRecord = {
+      id: Date.now(),
+      date: today,
+      subject: "산업안전기사",
+      year: examYear,
+      round: examRound,
+      time: `${Math.floor(seconds / 60)}분 ${seconds % 60}초`,
+      score: `${stats?.currentTotalScore || 0}점`,
+      icon: "🚦",
+      color: "#4FC3F7"
+    };
+
+    const savedRecords = localStorage.getItem("studyRecords");
+    const parsedRecords = savedRecords ? JSON.parse(savedRecords) : [];
+    
+    // 최신 기록을 맨 앞에 추가해서 저장
+    const updatedRecords = [newRecord, ...parsedRecords];
+    localStorage.setItem("studyRecords", JSON.stringify(updatedRecords));
+    // === 💡 대시보드 연동 로직 끝 ===
+
     router.push("/industrial/result");
   };
 
